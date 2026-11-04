@@ -9,7 +9,8 @@
     "docx": "node tools/build-docx.mjs",
     "build": "npm run lint; npm run figures && npm run site && npm run og && npm run docx",
     "og": "node tools/og-images.mjs",
-    "preview": "python3 -m http.server 8080 --directory site"
+    "preview": "python3 -m http.server 8080 --directory site",
+    "package": "node tools/package-site.mjs"
   },
   "devDependencies": {
     "mermaid": "11.4.1"

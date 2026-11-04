@@ -9,7 +9,8 @@ import { PROBLEMS, NEEDS, ENTRIES } from './nav.mjs';
 
 const CONFIG = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/site.config.json'), 'utf-8'));
 const SITE_NAME = CONFIG.title;
-const BASE = CONFIG.cname ? `https://${CONFIG.cname}/` : CONFIG.baseUrl;
+// SITE_BASE 为空字符串时不写死域名（打包版），由 set-domain.py 在部署时补上
+const BASE = process.env.SITE_BASE !== undefined ? process.env.SITE_BASE : (CONFIG.cname ? `https://${CONFIG.cname}/` : CONFIG.baseUrl);
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // ---------- 数据 ----------
@@ -343,19 +344,22 @@ function headMeta(p) {
   const title = p.out.title === SITE_NAME ? SITE_NAME : `${p.out.title} · ${SITE_NAME}`;
   const desc = plain(p.out.desc || CONFIG.description).slice(0, 120);
   const og = `${BASE}og/${p.key}.png`;
-  let m = `<meta name="description" content="${esc(desc)}">\n<link rel="canonical" href="${url}">\n`;
+  let m = `<meta name="description" content="${esc(desc)}">\n`;
+  if (BASE) m += `<link rel="canonical" href="${url}">\n<meta property="og:url" content="${url}">\n<meta property="og:image" content="${og}">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n`;
+  else m += `<!--site-url:${p.file}:${p.key}-->\n`;
   if (p.noindex) m += `<meta name="robots" content="noindex">\n`;
-  m += `<meta property="og:site_name" content="${esc(SITE_NAME)}">\n<meta property="og:locale" content="zh_CN">\n<meta property="og:type" content="${p.out.type === 'article' ? 'article' : 'website'}">\n<meta property="og:title" content="${esc(title)}">\n<meta property="og:description" content="${esc(desc)}">\n<meta property="og:url" content="${url}">\n<meta property="og:image" content="${og}">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta name="twitter:card" content="summary_large_image">\n`;
+  m += `<meta property="og:site_name" content="${esc(SITE_NAME)}">\n<meta property="og:locale" content="zh_CN">\n<meta property="og:type" content="${p.out.type === 'article' ? 'article' : 'website'}">\n<meta property="og:title" content="${esc(title)}">\n<meta property="og:description" content="${esc(desc)}">\n<meta name="twitter:card" content="summary_large_image">\n`;
   m += `<meta name="theme-color" content="#1f4a38">\n<meta name="author" content="${esc(CONFIG.author)}">\n`;
   if (p.out.type === 'article') {
-    const ld = { '@context': 'https://schema.org', '@type': 'MedicalWebPage', name: p.out.title, description: desc, inLanguage: 'zh-CN', url, image: og, dateModified: p.out.modified, author: { '@type': 'Person', name: CONFIG.author }, isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: BASE }, articleSection: p.out.section };
+    const ld = { '@context': 'https://schema.org', '@type': 'MedicalWebPage', name: p.out.title, description: desc, inLanguage: 'zh-CN', dateModified: p.out.modified, author: { '@type': 'Person', name: CONFIG.author }, isPartOf: { '@type': 'WebSite', name: SITE_NAME }, articleSection: p.out.section };
+    if (BASE) { ld.url = url; ld.image = og; ld.isPartOf.url = BASE; }
     m += `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>\n`;
   }
   return { m, title };
 }
 
 // ---------- 多页站 ----------
-const SITE = path.join(ROOT, 'site');
+const SITE = path.join(ROOT, process.env.SITE_OUT || 'site');
 fs.rmSync(SITE, { recursive: true, force: true });
 fs.mkdirSync(path.join(SITE, 'assets'), { recursive: true });
 fs.writeFileSync(path.join(SITE, 'assets/site.css'), CSS);
@@ -363,7 +367,7 @@ fs.writeFileSync(path.join(SITE, 'assets/site.js'), JS_FIG + '\n' + JS_SITE);
 fs.writeFileSync(path.join(SITE, 'assets/search-index.json'), JSON.stringify(SEARCH_INDEX));
 fs.writeFileSync(path.join(SITE, 'assets/favicon.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#ffffff"/><rect x="6" y="6" width="52" height="52" rx="9" fill="none" stroke="#1f4a38" stroke-width="5"/><text x="32" y="43" text-anchor="middle" font-family="PingFang SC,Noto Sans CJK SC,Microsoft YaHei,sans-serif" font-size="30" font-weight="700" fill="#262626">医</text></svg>`);
 fs.writeFileSync(path.join(SITE, '.nojekyll'), '');
-if (CONFIG.cname) fs.writeFileSync(path.join(SITE, 'CNAME'), CONFIG.cname + '\n');
+if (CONFIG.cname && BASE) fs.writeFileSync(path.join(SITE, 'CNAME'), CONFIG.cname + '\n');
 const multi = allPages('multi');
 for (const p of multi) {
   const up = '../'.repeat(p.depth);
@@ -386,8 +390,14 @@ ${m}<link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
   fs.writeFileSync(f, html);
 }
 const today = new Date().toISOString().slice(0, 10);
-fs.writeFileSync(path.join(SITE, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${multi.filter((p) => !p.noindex).map((p) => `  <url><loc>${BASE}${p.file === 'index.html' ? '' : p.file}</loc><lastmod>${p.out.modified || today}</lastmod><priority>${p.prio}</priority></url>`).join('\n')}\n</urlset>\n`);
-fs.writeFileSync(path.join(SITE, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${BASE}sitemap.xml\n`);
+const mapList = multi.filter((p) => !p.noindex).map((p) => ({ path: p.file === 'index.html' ? '' : p.file, lastmod: p.out.modified || today, priority: p.prio }));
+if (BASE) {
+  fs.writeFileSync(path.join(SITE, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${mapList.map((u) => `  <url><loc>${BASE}${u.path}</loc><lastmod>${u.lastmod}</lastmod><priority>${u.priority}</priority></url>`).join('\n')}\n</urlset>\n`);
+  fs.writeFileSync(path.join(SITE, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${BASE}sitemap.xml\n`);
+} else {
+  fs.writeFileSync(path.join(SITE, 'sitemap.json'), JSON.stringify(mapList, null, 1));
+  fs.writeFileSync(path.join(SITE, 'robots.txt'), `User-agent: *\nAllow: /\n`);
+}
 // 分享卡片图的待生成清单（tools/og-images.mjs 读取）
 fs.mkdirSync(path.join(ROOT, 'build'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'build/og-pages.json'), JSON.stringify(multi.map((p) => {
@@ -397,6 +407,7 @@ fs.writeFileSync(path.join(ROOT, 'build/og-pages.json'), JSON.stringify(multi.ma
 })));
 
 // ---------- 单文件预览（claude.ai 私有页面：不写 doctype/html/head/body，由平台包裹） ----------
+if (!process.env.SKIP_PREVIEW) {
 const PREVIEW = path.join(ROOT, 'site-preview');
 fs.mkdirSync(PREVIEW, { recursive: true });
 const sections = allPages('spa').filter((p) => p.key !== '404').map((p) => `<section class="page" id="p-${p.key}" data-title="${esc(p.out.title)}"${p.key === 'home' ? '' : ' hidden'}>${shell(p, 'spa')}</section>`).join('\n');
@@ -411,4 +422,5 @@ ${sections}
 <script>${JS_SITE}</script>
 `;
 fs.writeFileSync(path.join(PREVIEW, 'index.html'), preview);
-console.log(`site: ${multi.length} 页；搜索索引 ${(JSON.stringify(SEARCH_INDEX).length / 1024).toFixed(0)} KB；preview: ${(preview.length / 1024).toFixed(0)} KB`);
+}
+console.log(`site: ${multi.length} 页；搜索索引 ${(JSON.stringify(SEARCH_INDEX).length / 1024).toFixed(0)} KB`);
