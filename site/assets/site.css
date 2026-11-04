@@ -153,6 +153,30 @@ figcaption { font-family: var(--sans); font-size: 13px; color: var(--muted); mar
 .cc-out dd { margin: 0; font-size: 20px; font-variant-numeric: tabular-nums; }
 .cc-note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
 
+.fig-svg .outline-r{stroke:var(--fg);stroke-width:1}
+.fig-svg .beam{fill:var(--fg);opacity:.25} .fig-svg .beam-in{fill:var(--fg);opacity:.12}
+.fig-svg .target{fill:var(--fg);transition:r .4s} .fig-svg .vessel{fill:var(--bg);stroke:var(--fg);stroke-width:1.5}
+.fig-svg .vessel.hot{fill:var(--fg)} .fig-svg .halo{fill:var(--fg);opacity:0;transition:r .9s,rx .9s,ry .9s,opacity .9s}
+.fig-svg .bar{fill:var(--fill-3)} .fig-svg .bar-faint{fill:var(--fill-2);stroke:var(--fg);stroke-width:.6;stroke-dasharray:3 2}
+.fig-svg .hit{fill:transparent;cursor:pointer} .fig-svg .fl-row:focus{outline:none} .fig-svg .fl-row.on .hit,.fig-svg .fl-row:focus .hit{fill:var(--fg);fill-opacity:.07}
+.fig-svg .hair-s{stroke:var(--fg);stroke-width:2.4;stroke-linecap:round} .fig-svg .hair-s.thin{stroke-width:1;opacity:.6}
+.fig-svg .bulb{fill:var(--fg)} .fig-svg .bulb.rest{fill:var(--bg);stroke:var(--fg);stroke-width:1} .fig-svg .bulb.dead{fill:var(--fill-2);stroke:var(--muted);stroke-width:1;stroke-dasharray:2 2}
+.chip{font:inherit;font-family:var(--sans);font-size:13px;color:var(--fg);background:var(--bg);border:1px solid var(--rule);padding:3px 10px;cursor:pointer}
+.chip.on{border-color:var(--fg);background:var(--panel)} .chip:hover{border-color:var(--fg)}
+.cmp-ctl,.spt-ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 8px;font-family:var(--sans);font-size:13px}
+.cmp-g{display:flex;flex-wrap:wrap;gap:6px}
+.cmp-sort{display:flex;gap:6px;align-items:center}
+.cmp-table th[scope=row]{font-family:var(--sans);font-weight:600;white-space:nowrap;text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule)}
+.rev{font-family:var(--sans);font-size:12px;border:1px solid var(--fg);padding:0 5px;white-space:nowrap} .rev2{background:var(--fill-1)} .rev3{background:var(--fill-2)}
+.cmp-count{font-family:var(--sans);font-size:12px;color:var(--muted);margin:4px 0 0}
+.spt-fire{font:inherit;font-family:var(--sans);font-size:14px;color:var(--fg);background:var(--bg);border:1.5px solid var(--fg);padding:4px 16px;cursor:pointer}
+.spt-fire:hover{background:var(--panel)}
+.fl-panel{font-family:var(--sans);font-size:14px;line-height:1.7;border-top:1px solid var(--rule);padding-top:8px;min-height:4.8em}
+.fl-panel b{font-weight:600}
+.navmap{display:block} .navmap a text{fill:var(--fg)} .navmap a:hover text,.navmap a:focus text{text-decoration:underline} .navmap a:focus{outline:none}
+.navmap .pt{fill:var(--fg)} .navmap .lead{stroke:var(--muted);stroke-width:.8}
+@media (max-width:520px){.navmap-wrap{display:none}}
+
 .fig-svg{width:100%;height:auto;display:block;font-family:var(--sans);fill:var(--fg)}
 .fig-svg text{fill:var(--fg)} .fig-svg .muted{fill:var(--muted)}
 .fig-svg .f1{fill:var(--fill-1)} .fig-svg .f2{fill:var(--fill-2)} .fig-svg .f3{fill:var(--fill-3)}

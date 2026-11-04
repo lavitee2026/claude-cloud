@@ -1,3 +1,4 @@
+import { FIGURES2, FIGURE2_CSS } from './figures2.mjs';
 // 图的登记表。每张图只讲一件事；颜色只用主题变量（--fg 前景、--bg 背景、--muted 次要、--fill-1/2/3 灰阶），黑白灰细线。
 // kind: mermaid（构建时预渲染为 SVG）、svg（静态）、interactive（静态 SVG + 交互脚本，docx 用静态帧）
 
@@ -187,10 +188,10 @@ const cost = {
   caption: '一年的次数按十二除以维持月数估算，数字只作估算，维持时间以医生对你的判断为准。',
 };
 
-export const FIGURES = { decision, depth, timeline, face, botox, cost };
+export const FIGURES = { decision, depth, timeline, face, botox, cost, ...FIGURES2 };
 
 // 图的样式，站点与离线渲染共用
-export const FIGURE_CSS = `
+export const FIGURE_CSS = FIGURE2_CSS + `
 .fig-svg{width:100%;height:auto;display:block;font-family:var(--sans);fill:var(--fg)}
 .fig-svg text{fill:var(--fg)} .fig-svg .muted{fill:var(--muted)}
 .fig-svg .f1{fill:var(--fill-1)} .fig-svg .f2{fill:var(--fill-2)} .fig-svg .f3{fill:var(--fill-3)}

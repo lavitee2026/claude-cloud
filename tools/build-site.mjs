@@ -64,7 +64,8 @@ function inline(text, ctx) {
 function figureHtml(name, ctx) {
   const fig = FIGURES[name];
   let inner;
-  if (fig.kind === 'mermaid') inner = fs.readFileSync(path.join(ROOT, 'build/figures', `${name}.svg`), 'utf-8');
+  if (fig.html) inner = fig.html(ctx);
+  else if (fig.kind === 'mermaid') inner = fs.readFileSync(path.join(ROOT, 'build/figures', `${name}.svg`), 'utf-8');
   else if (name === 'face') inner = `<div class="fig-face" data-fig="face" data-default="nose" data-zones="${esc(JSON.stringify(FACE_ZONES))}"><div class="face-svg">${fig.svg()}</div><div class="face-panel" aria-live="polite"></div></div><p class="fig-hint">点选或用 Tab 键切换部位</p>`;
   else if (name === 'botox') inner = `<div class="fig-botox" data-fig="botox">${fig.svg()}<div class="bx-controls"><button type="button" aria-pressed="false">播放</button><label class="sr" for="bx-range-${ctx.docId}">注射后天数</label><input type="range" id="bx-range-${ctx.docId}" min="0" max="180" step="1" value="0"><output class="bx-day">注射后第 0 天</output></div><p class="bx-status" aria-live="polite"></p></div>`;
   else if (name === 'cost') {
@@ -147,10 +148,46 @@ function navList(items, link) {
   }).join('')}</ul>`;
 }
 
+
+// 首页点选图：面部与身体的示意线稿，标签链接到问题导读页
+function navMapSvg(link) {
+  const L = [
+    // [slug, 名称, 标签x, 标签y, 对齐, 点x, 点y]
+    ['dongtai', '动态皱纹', 20, 104, 'start', 170, 112],
+    ['yanbu', '眼部形态', 20, 168, 'start', 138, 176],
+    ['aoxian', '凹陷与容量不足', 20, 214, 'start', 140, 200],
+    ['seban', '色斑与肤色不均', 20, 258, 'start', 122, 232],
+    ['songchi', '松弛与下垂', 20, 312, 'start', 122, 292],
+    ['zhidi', '皮肤质地', 272, 132, 'start', 214, 150],
+    ['bibu', '鼻部形态', 272, 184, 'start', 172, 214],
+    ['fanhong', '泛红与红血丝', 272, 232, 'start', 214, 232],
+    ['dougeng', '痘坑与毛孔', 272, 272, 'start', 208, 258],
+    ['gugu', '面部骨骼', 272, 318, 'start', 228, 290],
+    ['xiongbu', '胸部', 566, 150, 'start', 500, 150],
+    ['tixing', '身体轮廓与脂肪', 566, 214, 'start', 500, 214],
+    ['maofa', '多余毛发', 566, 318, 'start', 478, 320],
+  ];
+  let s = `<svg viewBox="0 0 680 370" class="fig-svg navmap" role="group" aria-label="按部位找问题">`;
+  s += `<ellipse cx="170" cy="205" rx="92" ry="128" class="outline"/>`;
+  s += `<path d="M122 170 Q140 160 158 170 Q140 180 122 170 Z M182 170 Q200 160 218 170 Q200 180 182 170 Z" class="feat"/>`;
+  s += `<path d="M164 185 L160 222 Q170 230 180 222 L176 185" class="feat-thin"/><path d="M148 262 Q170 254 192 262 Q170 274 148 262 Z" class="feat"/>`;
+  s += `<circle cx="490" cy="62" r="26" class="outline"/>`;
+  s += `<path d="M444 106 Q490 92 536 106 L548 200 Q530 214 528 240 L522 350 M458 350 L452 240 Q450 214 432 200 L444 106 M444 106 L420 220 M536 106 L560 220" class="outline"/>`;
+  for (const [slug, name, lx, ly, , px, py] of L) {
+    const w = name.length * 14;
+    const ex = lx < px ? lx + w + 4 : lx - 4;
+    s += `<line x1="${ex}" y1="${ly - 5}" x2="${px}" y2="${py}" class="lead"/><circle cx="${px}" cy="${py}" r="3.5" class="pt"/>`;
+    s += `<a href="${link.landing(slug)}"><text x="${lx}" y="${ly}" font-size="14">${name}</text></a>`;
+  }
+  s += `</svg>`;
+  return s;
+}
+
 function homePage(link) {
   let h = `<header class="masthead"><h1>${SITE_NAME}</h1><p>栏目全文合集 · 44 篇 · 六个子分类 · 24 个导读页 · 2026 年 11 月修订版</p></header>`;
   h += `<aside class="home-urgent" aria-label="紧急情况"><p>注射或手术以后出现下面的情况，立即联系做治疗的机构，联系不上去医院急诊。</p><ul><li>皮肤发白、发灰、发紫，出现网状花纹，疼痛越来越重</li><li>视物模糊、视力下降、眼痛，直接去眼科急诊</li><li>呼吸困难、胸痛、咯血，嘴唇或喉咙发紧肿胀，直接打 120</li></ul><p class="go"><a href="${link.article('41')}">注射后的紧急信号</a> · <a href="${link.article('42')}">外科术后的紧急信号</a> · <a href="${link.landing('buanxin')}">做完不放心</a></p></aside>`;
   h += `<section class="home-section"><h2>从这里读起</h2><div class="entries">${ENTRIES.map((e) => `<div><h3>${esc(e.name)}</h3><ul>${e.ids.map((id) => { const r = byId.get(id).meta; return `<li><a href="${link.article(id)}">${Number(id)} ${esc(r.title)}</a> <span class="sub">${esc(r.subtitle)}</span></li>`; }).join('')}</ul></div>`).join('')}</div></section>`;
+  h += `<section class="home-section navmap-wrap"><h2>按部位找问题</h2>${navMapSvg(link)}</section>`;
   h += `<section class="home-section"><h2>按问题</h2>${navList(PROBLEMS, link)}</section>`;
   h += `<section class="home-section"><h2>按处境</h2>${navList(NEEDS, link)}</section>`;
   h += `<section class="home-section"><h2>全部篇目</h2><div class="search"><label class="sr" for="toc-search">搜索篇目</label><input type="search" id="toc-search" placeholder="搜索篇目，如 透明质酸、恢复期、价格"><output id="toc-count"></output></div>`;

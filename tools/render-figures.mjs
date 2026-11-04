@@ -67,6 +67,15 @@ async function main() {
     let inner;
     if (fig.kind === 'mermaid') inner = fs.readFileSync(path.join(OUT, `${name}.svg`), 'utf-8');
     else inner = fig.svg();
+    if (fig.html) {
+      await page.setContent(`<!doctype html><meta charset="utf-8"><style>${LIGHT_VARS}${FIGURE_CSS}</style><body><div id="fig" style="width:760px;padding:8px">${fig.html({ docId: 'png' })}</div></body>`);
+      await page.addScriptTag({ content: runtime });
+      if (name === 'spt') { await page.evaluate(() => { document.documentElement.style.setProperty('--x', '1'); document.querySelector('.spt-fire').click(); }); await page.waitForTimeout(1600); }
+      const svgEl = await page.$('#fig svg');
+      await svgEl.screenshot({ path: path.join(OUT, `${name}.png`) });
+      console.log('png', name);
+      continue;
+    }
     let wrap = `<div id="fig" style="width:${name === 'face' ? 380 : name === 'decision' ? 560 : 760}px;padding:8px">${inner}</div>`;
     if (name === 'botox') wrap = `<div id="fig" data-fig="botox" style="width:760px;padding:8px">${inner}<div hidden><button></button><input type="range" min="0" max="180"><span class="bx-day"></span><span class="bx-status"></span></div></div>`;
     await page.setContent(`<!doctype html><meta charset="utf-8"><style>${LIGHT_VARS}${FIGURE_CSS}.mermaid-svg{max-width:100%}</style><body>${wrap}</body>`);
