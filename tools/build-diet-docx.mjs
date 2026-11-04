@@ -19,9 +19,9 @@ async function build() {
   const appendix = loadDoc(path.join(ROOT, 'content/diet/appendix.md'));
 
   const children = [];
-  children.push(...masthead('', SERIES, '营养说法的证据与适合的做法', `${articles.length} 篇全稿 · 2026 年 11 月`));
+  children.push(...masthead('', SERIES, '营养说法的证据与适合的做法', `${articles.length} 篇全稿 · 修订版 · 2026 年 11 月`));
   children.push(P.h1('本册内容'));
-  children.push(P.body('本册收入「吃的证据」系列的全部篇目。每篇开头是速读摘要和一句结论，正文用方括号数字标注来源，对应篇末的参考文献，研究机构与数据来源写在篇末的注里。册末的编辑附录收录系列设定、发布顺序、作者待补的位置和待核清单，供编辑使用，不随文发布。'));
+  children.push(P.body('本册收入「吃的证据」系列的全部篇目。每篇开头是速读摘要和一句结论，正文用方括号数字标注来源，对应篇末的参考文献，研究机构与数据来源写在篇末的注里。册末的编辑附录收录本版改动、系列设定、推送标题与摘要、作者待补的位置和待核清单，供编辑使用，不随文发布。'));
   children.push(table(['编号', '篇目', '读者能得到什么'], articles.map((a) => [a.meta.id, `${a.meta.title} · ${a.meta.subtitle}`, a.meta.reader || '']), [900, 4300, 4106]));
   children.push(spacer());
   children.push(P.h1('声明'));
