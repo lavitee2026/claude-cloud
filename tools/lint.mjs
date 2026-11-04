@@ -16,14 +16,14 @@ export const RULES = [
   { id: 'label-colon', level: 'error', desc: '标签词冒号', re: /^[一-鿿]{1,8}：/gm },
   { id: 'dquote', level: 'warn', desc: '双引号改用直角引号「」', re: /[“”"]/g },
   { id: 'banned', level: 'error', desc: '禁用词', re: /拆开|拆解|拆穿|一刀|砍掉|落盘|立住/g },
-  { id: 'banned-chai', level: 'warn', desc: '禁用词「拆」', re: /拆(?!除|迁)/g },
+  { id: 'banned-chai', level: 'warn', desc: '禁用词「拆」', re: /拆(?!除|迁|线)/g },
   { id: 'bigword', level: 'warn', desc: '刻意大词', re: /结构|机制|维度|路径|变现|赖以成立|本质上|量级|按亿计|成分|一向如此|这一层/g },
   { id: 'verb', level: 'error', desc: '万能动词与视角腔', re: /解读|解构|叙事|从[^，。]{1,8}视角/g },
   { id: 'contrast', level: 'warn', desc: '对照句式', re: /不是[^。；！？]{1,24}而是|既是[^。；]{1,24}也是|这不是[^。；]{1,16}，是|是[^。；，]{1,12}，不是[^。；]{1,12}[。；]/g },
   { id: 'naming', level: 'error', desc: '迂回命名', re: /可以叫|不妨称之为|某种意义上|姑且称/g },
   { id: 'announce', level: 'warn', desc: '报幕句', re: /本文|写到这里|得分开说|下面我们|接下来我|说一句反方向|还有一件事我得说|那这有什么用/g },
   { id: 'emotion', level: 'error', desc: '伪情绪拍', re: /我想了很久|我愣了一下|我确实看见/g },
-  { id: 'absolute', level: 'warn', desc: '绝对化表述', re: /唯一|几乎全部|几乎总是|没有[^。，]{0,6}可查|永久|百分之百|100%/g },
+  { id: 'absolute', level: 'warn', desc: '绝对化表述', re: /唯一(?!标识)|几乎全部|几乎总是|没有[^。，]{0,6}可查|永久|百分之百|100%/g },
   { id: 'superlative', level: 'warn', desc: '替读者排序的最高级', re: /最该|最有争议|最重要|最关键|最值得/g },
   { id: 'position', level: 'warn', desc: '位置化与端点化表述', re: /落在[^。，]{0,6}身上|那一端|这一端|够得到哪一段|落到[^。，]{0,4}头上/g },
   { id: 'meta', level: 'warn', desc: '展示推理过程', re: /往下推|可以推出|由此可见|不难看出|这一点可以从/g },
@@ -78,7 +78,7 @@ function lintDoc(doc) {
   // 标题禁冒号与破折号
   for (const k of ['title', 'subtitle']) if (meta[k] && /[：:—]/.test(meta[k])) add('error', 'title-punct', `meta.${k}`, '标题禁冒号与破折号');
   // 小标题不承担疑问
-  for (const b of blocks) if (b.type === 'h2' && /[？?吗呢]|怎么|为什么|谁|哪里|什么/.test(b.text) && !LIST_SECTIONS.includes(b.text) && !/^面诊时可以问的问题$/.test(b.text)) add('warn', 'heading-question', b.line, `小标题带疑问「${b.text}」`);
+  for (const b of blocks) if (b.type === 'h2' && /[？?吗呢]|怎么|怎样|为什么|谁|哪里|什么/.test(b.text) && !LIST_SECTIONS.includes(b.text) && !/^面诊时可以问的问题$/.test(b.text)) add('warn', 'heading-question', b.line, `小标题带疑问「${b.text}」`);
   // 单句成段（短句）
   for (const b of blocks) if (b.type === 'p' && cjkCount(b.text) < 22 && (b.text.match(/[。！？]/g) || []).length <= 1 && b.section !== '今天能做的一件事') add('warn', 'one-liner', b.line, `单句成段「${b.text}」`);
   // 列表数量与位置
