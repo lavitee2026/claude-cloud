@@ -1,0 +1,15 @@
+{
+  "name": "yimei-xuanze",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "node tools/lint.mjs",
+    "figures": "node tools/render-figures.mjs",
+    "site": "node tools/build-site.mjs",
+    "docx": "node tools/build-docx.mjs",
+    "build": "npm run lint; npm run figures && npm run site && npm run docx"
+  },
+  "devDependencies": {
+    "mermaid": "11.4.1"
+  }
+}
