@@ -1,5 +1,5 @@
 import { FIGURES2, FIGURE2_CSS } from './figures2.mjs';
-// 图的登记表。每张图只讲一件事；颜色只用主题变量（--fg 前景、--bg 背景、--muted 次要、--fill-1/2/3 灰阶），黑白灰细线。
+// 图的登记表。每张图只讲一件事；颜色只用主题变量（--ink 前景、--paper 背景、--ink3 次要、--fill-1/2/3 灰阶），黑白灰细线。
 // kind: mermaid（构建时预渲染为 SVG）、svg（静态）、interactive（静态 SVG + 交互脚本，docx 用静态帧）
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -192,25 +192,25 @@ export const FIGURES = { decision, depth, timeline, face, botox, cost, ...FIGURE
 
 // 图的样式，站点与离线渲染共用
 export const FIGURE_CSS = FIGURE2_CSS + `
-.fig-svg{width:100%;height:auto;display:block;font-family:var(--sans);fill:var(--fg)}
-.fig-svg text{fill:var(--fg)} .fig-svg .muted{fill:var(--muted)}
+.fig-svg{width:100%;height:auto;display:block;font-family:var(--sans);fill:var(--ink)}
+.fig-svg text{fill:var(--ink)} .fig-svg .muted{fill:var(--ink3)}
 .fig-svg .f1{fill:var(--fill-1)} .fig-svg .f2{fill:var(--fill-2)} .fig-svg .f3{fill:var(--fill-3)}
-.fig-svg .ln{stroke:var(--fg);stroke-width:1;fill:none} .fig-svg .ln-strong{stroke:var(--fg);stroke-width:1.6;fill:none}
-.fig-svg .ln-thin{stroke:var(--fg);stroke-width:.6;opacity:.55} .fig-svg .ln-dash{stroke:var(--fg);stroke-width:1;stroke-dasharray:4 3;fill:none}
-.fig-svg .bar{fill:var(--fill-3);stroke:var(--fg);stroke-width:1}
-.fig-svg .dot,.fig-svg .solid{fill:var(--fg)} .fig-svg .hole{fill:var(--bg)}
+.fig-svg .ln{stroke:var(--ink);stroke-width:1;fill:none} .fig-svg .ln-strong{stroke:var(--ink);stroke-width:1.6;fill:none}
+.fig-svg .ln-thin{stroke:var(--ink);stroke-width:.6;opacity:.55} .fig-svg .ln-dash{stroke:var(--ink);stroke-width:1;stroke-dasharray:4 3;fill:none}
+.fig-svg .bar{fill:var(--fill-3);stroke:var(--ink);stroke-width:1}
+.fig-svg .dot,.fig-svg .solid{fill:var(--ink)} .fig-svg .hole{fill:var(--paper)}
 /* 皮肤颜色示意用固定灰阶，深浅主题下都由浅到深 */
-.fig-svg .sw1{fill:#ffffff;stroke:var(--fg);stroke-width:1.6} .fig-svg .sw2,.fig-svg .sw3{stroke:var(--fg);stroke-width:1} .fig-svg .sw4{fill:#262626;stroke:var(--fg);stroke-width:1}
+.fig-svg .sw1{fill:#ffffff;stroke:var(--ink);stroke-width:1.6} .fig-svg .sw2,.fig-svg .sw3{stroke:var(--ink);stroke-width:1} .fig-svg .sw4{fill:#262626;stroke:var(--ink);stroke-width:1}
 .fig-svg .sk2{fill:#d4d7d3} .fig-svg .sk3{fill:#8f948e} .fig-svg .sk-line{stroke:#262626;stroke-width:.6;opacity:.6} .fig-svg .sk-hole{fill:#ffffff}
-.fig-svg .outline{fill:none;stroke:var(--fg);stroke-width:1.4} .fig-svg rect.outline{fill:var(--fill-1)}
-.fig-svg .feat{fill:none;stroke:var(--fg);stroke-width:1.2;stroke-linecap:round} .fig-svg .feat-thin{fill:none;stroke:var(--fg);stroke-width:.9;stroke-linecap:round}
-.fig-svg .zone{fill:var(--fg);fill-opacity:.06;stroke:var(--fg);stroke-width:1;stroke-dasharray:3 3;cursor:pointer;transition:fill-opacity .15s}
+.fig-svg .outline{fill:none;stroke:var(--ink);stroke-width:1.4} .fig-svg rect.outline{fill:var(--fill-1)}
+.fig-svg .feat{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round} .fig-svg .feat-thin{fill:none;stroke:var(--ink);stroke-width:.9;stroke-linecap:round}
+.fig-svg .zone{fill:var(--ink);fill-opacity:.06;stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3;cursor:pointer;transition:fill-opacity .15s}
 .fig-svg .zone:hover,.fig-svg .zone:focus{fill-opacity:.18;outline:none;stroke-dasharray:none}
 .fig-svg .zone.on{fill-opacity:.3;stroke-width:1.6;stroke-dasharray:none}
-.fig-svg .vesicle{fill:var(--bg);stroke:var(--fg);stroke-width:1} .fig-svg .ach{fill:var(--fg)}
-.fig-svg .block{stroke:var(--fg);stroke-width:2.2;stroke-linecap:round}
-.fig-svg .stripe{stroke:var(--fg);stroke-width:1;opacity:.6}
-.fig-svg .skin{fill:none;stroke:var(--fg);stroke-width:2}
-.fig-svg .curve{fill:none;stroke:var(--fg);stroke-width:2}
-.fig-svg .cursor{stroke:var(--fg);stroke-width:1;opacity:.5}
+.fig-svg .vesicle{fill:var(--paper);stroke:var(--ink);stroke-width:1} .fig-svg .ach{fill:var(--ink)}
+.fig-svg .block{stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
+.fig-svg .stripe{stroke:var(--ink);stroke-width:1;opacity:.6}
+.fig-svg .skin{fill:none;stroke:var(--ink);stroke-width:2}
+.fig-svg .curve{fill:none;stroke:var(--ink);stroke-width:2}
+.fig-svg .cursor{stroke:var(--ink);stroke-width:1;opacity:.5}
 `;

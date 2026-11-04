@@ -31,15 +31,15 @@ const MERMAID_THEME = {
 
 export function themeMermaidSvg(svg) {
   return svg
-    .replace(new RegExp(FG, 'gi'), 'var(--fg)')
-    .replace(new RegExp(BG, 'gi'), 'var(--bg)')
+    .replace(new RegExp(FG, 'gi'), 'var(--ink)')
+    .replace(new RegExp(BG, 'gi'), 'var(--paper)')
     .replace(new RegExp(MID, 'gi'), 'var(--fill-1)')
-    .replace(/rgb\(1,\s*2,\s*3\)/g, 'var(--fg)')
-    .replace(/rgb\(253,\s*254,\s*252\)/g, 'var(--bg)')
+    .replace(/rgb\(1,\s*2,\s*3\)/g, 'var(--ink)')
+    .replace(/rgb\(253,\s*254,\s*252\)/g, 'var(--paper)')
     .replace(/<svg /, '<svg class="fig-svg mermaid-svg" ');
 }
 
-const LIGHT_VARS = `:root{--fg:#262626;--bg:#ffffff;--muted:#6b706b;--fill-1:#f2f3f1;--fill-2:#e3e5e2;--fill-3:#b9bdb8;--sans:"Noto Sans CJK SC","WenQuanYi Zen Hei",sans-serif}body{margin:0;background:#fff}`;
+const LIGHT_VARS = `:root{--ink:#262626;--paper:#ffffff;--ink2:#5c615c;--ink3:#6b706b;--rule:#d8dbd6;--panel:#f2f3f1;--line:#1f4a38;--fill-1:#f2f3f1;--fill-2:#e3e5e2;--fill-3:#b9bdb8;--sans:"Noto Sans CJK SC","WenQuanYi Zen Hei",sans-serif}body{margin:0;background:#fff}`;
 
 async function main() {
   const browser = await chromium.launch();

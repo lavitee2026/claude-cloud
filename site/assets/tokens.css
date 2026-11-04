@@ -1,0 +1,33 @@
+/* sooogooo.plus 设计令牌
+   全站共用。界面只用黑白灰；深绿 --line 只用于结构线和链接下划线；氛围图只进封面位。
+   各栏目站点先引入本文件，再引入栏目自己的样式。 */
+:root {
+  --paper: #FAFAF8;  /* 页面底 */
+  --panel: #F2F3F1;  /* 速读框、引用预览、高亮行 */
+  --ink: #262626;    /* 正文、标题 */
+  --ink2: #5C615C;   /* 副标题、说明、图注、文献 */
+  --ink3: #6B706B;   /* 标签、日期、编号、计数 */
+  --rule: #D8DBD6;   /* 行分隔线、次要边框 */
+  --line: #1F4A38;   /* 结构线：报头粗线 3px、题眼竖条 3px、标题下细线 1px */
+  --fill-1: #F2F3F1; --fill-2: #E3E5E2; --fill-3: #B9BDB8;  /* 信息图灰阶 */
+  --mood: #F5F0E6;   /* 封面位无图时的底色（奶油米白） */
+
+  --sans: "PingFang SC", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", "Heiti SC", "SimHei", sans-serif;
+  --serif: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  --kai: "Kaiti SC", "STKaiti", "KaiTi", "AR PL UKai CN", "Songti SC", "Noto Serif CJK SC", serif;
+
+  --measure: 680px;  /* 阅读栏 */
+  --wide: 1120px;    /* 站点首页、栏目首页 */
+  --wide-article: 1240px;  /* 文章页三栏 */
+  --frame: var(--measure);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #151716; --panel: #1D201E; --ink: #E3E4E1; --ink2: #B4B9B4; --ink3: #9EA59F; --rule: #343935; --line: #7FAE98;
+    --fill-1: #222624; --fill-2: #2D322F; --fill-3: #5B635E; --mood: #2A2826; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #151716; --panel: #1D201E; --ink: #E3E4E1; --ink2: #B4B9B4; --ink3: #9EA59F; --rule: #343935; --line: #7FAE98;
+  --fill-1: #222624; --fill-2: #2D322F; --fill-3: #5B635E; --mood: #2A2826; color-scheme: dark;
+}

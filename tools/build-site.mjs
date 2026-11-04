@@ -38,6 +38,8 @@ function linker(target, depth) {
     guides: () => (target === 'spa' ? '#guides' : `${up}guides.html`),
     search: () => (target === 'spa' ? '#search' : `${up}search.html`),
     anchor: (id) => `#${id}`,
+    // 单文件预览不带图片资源，封面位不出
+    asset: (p) => (target === 'spa' ? null : `${up}assets/${p}`),
   };
 }
 
@@ -96,7 +98,8 @@ function blocksHtml(blocks, ctx) {
       case 'ol': h += `<ol>${b.items.map((x) => `<li>${inline(x, ctx)}</li>`).join('')}</ol>`; break;
       case 'ul': h += `<ul>${b.items.map((x) => `<li>${inline(x, ctx)}</li>`).join('')}</ul>`; break;
       case 'table':
-        h += `<div class="table-wrap"><table><thead><tr>${b.header.map((c) => `<th scope="col">${inline(c, ctx)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c, ctx)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+        ctx.tables = (ctx.tables || 0) + 1;
+        h += `<div class="table-wrap" tabindex="0" role="region" aria-label="表格 ${ctx.tables}，可左右滑动"><table><thead><tr>${b.header.map((c) => `<th scope="col">${inline(c, ctx)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c, ctx)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
         break;
       case 'emergency':
         h += `<aside class="emergency" aria-label="立即联系治疗机构或去急诊的情况"><p class="em-title">立即联系治疗机构或去急诊的情况</p><ul>${b.items.map((x) => `<li>${inline(x, ctx)}</li>`).join('')}</ul>${b.note ? `<p>${inline(b.note, ctx)}</p>` : ''}</aside>`;
@@ -104,7 +107,7 @@ function blocksHtml(blocks, ctx) {
       case 'figure': h += figureHtml(b.name, ctx); break;
       case 'evidence': h += `<p class="evidence">${inline(b.text, ctx)}</p>`; break;
       case 'refs':
-        h += `<p class="refs-title">参考文献</p><ol class="refs">${b.items.map((r) => `<li id="ref-${ctx.docId}-${r.n}" value="${r.n}">${esc(r.text).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" rel="noopener" target="_blank">$1</a>')}</li>`).join('')}</ol>`;
+        h += `<p class="refs-title" id="${ctx.docId}-refs">参考文献</p><ol class="refs">${b.items.map((r) => `<li id="ref-${ctx.docId}-${r.n}" value="${r.n}">${esc(r.text).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" rel="noopener" target="_blank">$1</a>')}</li>`).join('')}</ol>`;
         break;
       default: break;
     }
@@ -117,13 +120,45 @@ function topbar(link, crumb) {
   return crumb ? `<p class="crumbline">${crumb}</p>` : '';
 }
 
-function siteHeader(link, mainId) {
-  return `<a class="skip" href="#${mainId}">跳到正文</a><header class="sitebar"><div class="sitebar-in"><a class="site" href="${link.home()}">${SITE_NAME}</a><nav aria-label="站点"><a href="${link.catalog()}">篇目</a><a href="${link.guides()}">导读</a><a href="${link.search()}">搜索</a><a href="${link.refs()}">文献</a><a href="${link.about()}">声明</a></nav></div></header>`;
+// 站点字标：最后一个点之后的部分用浅一级的墨色
+function brandMark(name) {
+  const i = name.lastIndexOf('.');
+  return i > 0 ? `${esc(name.slice(0, i))}<span>${esc(name.slice(i))}</span>` : esc(name);
+}
+
+// 页头两层：上层是 sooogooo.plus 站点，下层是本栏目
+function siteHeader(link, mainId, key) {
+  const P = CONFIG.parent;
+  const brand = P && P.name ? (P.url ? `<a class="brand" href="${esc(P.url)}">${brandMark(P.name)}</a>` : `<span class="brand">${brandMark(P.name)}</span>`) : '';
+  const cur = (k) => (k === key ? ' aria-current="page"' : '');
+  const nav = [['catalog', '篇目'], ['guides', '导读'], ['search', '搜索'], ['refs', '文献'], ['about', '声明']].map(([k, t]) => `<a href="${link[k]()}"${cur(k)}>${t}</a>`).join('');
+  return `<a class="skip" href="#${mainId}">跳到正文</a><header class="sitebar"><div class="topline"><div class="bar-in">${brand}<a class="urgent" href="${link.landing('jinji')}">紧急情况</a><button type="button" class="theme-btn" data-theme-toggle hidden>深色</button></div></div><div class="colbar"><div class="bar-in"><a class="site" href="${link.home()}"${key === 'home' ? ' aria-current="page"' : ''}>${SITE_NAME}</a><nav aria-label="${SITE_NAME}">${nav}</nav></div></div></header>`;
 }
 
 function siteFooter(link, full) {
   const head = full ? `<p>${esc(DISCLAIMER)}</p><p>${esc(INTEREST)}</p>` : `<p>医美科普，不构成诊断或治疗建议，不推荐任何机构、医生或产品。<a href="${link.about()}">完整声明</a></p>`;
-  return `<footer class="sitefoot">${head}<p>${SITE_NAME} · 于意云 何 · 2026 年 11 月修订版</p></footer>`;
+  const P = CONFIG.parent;
+  return `<footer class="sitefoot"><div class="in">${head}<p>${SITE_NAME}${P && P.name ? ` · ${esc(P.name)}` : ''} · 于意云 何 · 2026 年 11 月修订版</p></div></footer>`;
+}
+
+function coverHtml(src, link, cls) {
+  const url = src ? link.asset(src) : null;
+  return url ? `<figure class="cover ${cls || ''}"><img src="${esc(url)}" alt="" loading="lazy" decoding="async"></figure>` : '';
+}
+
+function dateZh(s) {
+  const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[1]} 年 ${Number(m[2])} 月 ${Number(m[3])} 日` : '';
+}
+
+// 本篇小标题：宽屏时在左栏，窄屏时折叠在篇首下方
+function tocItems(doc) {
+  const items = doc.blocks.filter((b) => b.type === 'h2' && b.text !== '参考文献').map((b) => ({ id: `${doc.meta.id}-s${b.line}`, t: b.text }));
+  if (doc.blocks.some((b) => b.type === 'refs')) items.push({ id: `${doc.meta.id}-refs`, t: '参考文献' });
+  return items;
+}
+function tocList(items, link) {
+  return `<ul class="toc-list">${items.map((x) => `<li><a href="${link.anchor(x.id)}">${esc(x.t)}</a></li>`).join('')}</ul>`;
 }
 
 function articlePage(doc, link) {
@@ -132,17 +167,23 @@ function articlePage(doc, link) {
   const idx = articles.findIndex((a) => a.meta.id === m.id);
   const prev = articles[idx - 1], next = articles[idx + 1];
   const related = (m.related || []).filter((id) => byId.has(id) && id !== m.id);
-  let h = topbar(link, `<a href="${link.category(CATEGORIES.indexOf(m.category) + 1)}">${esc(m.category)}</a>`);
-  h += `<article class="wrap"><header class="art-head"><p class="eyebrow">第 ${Number(m.id)} 篇 · ${esc(m.category)}</p><h1 class="title">${esc(m.title)}</h1><p class="subtitle">${esc(m.subtitle)}</p>`;
+  const toc = tocItems(doc);
+  const byline = [SIGNATURE, m.verified ? `${dateZh(m.verified)}核查` : '', m.evidence ? `证据等级 ${esc(m.evidence)}` : ''].filter(Boolean).join(' · ');
+  let h = `<div class="art-layout"><nav class="toc-rail" aria-label="本篇小标题"><p class="lbl">本篇</p>${tocList(toc, link)}</nav>`;
+  h += `<article class="art-main"><header class="art-head"><p class="eyebrow"><a href="${link.category(CATEGORIES.indexOf(m.category) + 1)}">${esc(m.category)}</a> · 第 ${Number(m.id)} 篇</p><h1 class="title">${esc(m.title)}</h1><p class="subtitle">${esc(m.subtitle)}</p><p class="byline">${byline}</p>`;
+  h += coverHtml(m.cover, link, 'art-cover');
   if (m.status === '原稿') h += `<p class="status-note">本篇为原稿，尚未按新体例修订和核查证据，试点确认后修订。</p>`;
   h += `<div class="summary"><b>速读</b>${inline(String(m.summary), ctx)}</div>`;
   if (m.takeaway) h += `<p class="takeaway">${inline(String(m.takeaway), ctx)}</p>`;
-  h += `</header><div class="prose">${blocksHtml(doc.blocks, ctx)}</div>`;
+  h += `</header>`;
+  if (toc.length) h += `<details class="toc-inline"><summary><span>本篇小标题 <span class="n">· ${toc.length} 节</span></span></summary><nav aria-label="本篇小标题">${tocList(toc, link)}</nav></details>`;
+  h += `<div class="prose">${blocksHtml(doc.blocks, ctx)}</div>`;
   h += `<p class="statement">${esc(DISCLAIMER)}</p><p class="statement">${esc(INTEREST)}</p><p class="signature">${SIGNATURE}</p>`;
   if (related.length) h += `<section class="related"><h2>相关篇目</h2><ul>${related.map((id) => { const r = byId.get(id).meta; return `<li><a href="${link.article(id)}">第 ${Number(id)} 篇 ${esc(r.title)} · ${esc(r.subtitle)}</a></li>`; }).join('')}</ul></section>`;
-  h += `<nav class="pager" aria-label="上一篇和下一篇">${prev ? `<a href="${link.article(prev.meta.id)}">上一篇 ${esc(prev.meta.title)}</a>` : '<span></span>'}${next ? `<a href="${link.article(next.meta.id)}">下一篇 ${esc(next.meta.title)}</a>` : '<span></span>'}</nav>`;
-  h += `</article>`;
-  return { title: `${m.title} · ${m.subtitle}`, body: h, desc: String(m.summary), type: 'article', modified: m.verified, section: m.category };
+  const pg = (d, cls, lbl) => `<a class="${cls}" href="${link.article(d.meta.id)}"><span class="lbl">${lbl}</span><span class="t">${esc(d.meta.title)}</span></a>`;
+  h += `<nav class="pager" aria-label="上一篇和下一篇">${prev ? pg(prev, 'prev', '上一篇') : ''}${next ? pg(next, 'next', '下一篇') : ''}</nav>`;
+  h += `</article><aside class="cite-rail" aria-label="引用预览"></aside></div>`;
+  return { title: `${m.title} · ${m.subtitle}`, body: h, desc: String(m.summary), type: 'article', modified: m.verified, section: m.category, frame: 'article' };
 }
 
 function landingPage(doc, link) {
@@ -200,19 +241,18 @@ function navMapSvg(link) {
 }
 
 function homePage(link) {
-  let h = `<header class="masthead"><h1>${SITE_NAME}</h1><p class="lede">先说清楚要解决的问题，再选方式、查资质、算代价，项目名放在最后。</p><p>44 篇 · 六个子分类 · 24 个导读页 · 2026 年 11 月修订版</p></header>`;
-  h += `<aside class="home-urgent" aria-label="紧急情况"><p>注射或手术以后出现下面的情况，立即联系做治疗的机构，联系不上去医院急诊。</p><ul><li>皮肤发白、发灰、发紫，出现网状花纹，疼痛越来越重</li><li>视物模糊、视力下降、眼痛，直接去眼科急诊</li><li>呼吸困难、胸痛、咯血，嘴唇或喉咙发紧肿胀，直接打 120</li></ul><p class="go"><a href="${link.article('41')}">注射后的紧急信号</a> · <a href="${link.article('42')}">外科术后的紧急信号</a> · <a href="${link.landing('buanxin')}">做完不放心</a></p></aside>`;
-  h += `<section class="home-section"><h2>从这里读起</h2><div class="entries">${ENTRIES.map((e) => `<div><h3>${esc(e.name)}</h3><ul>${e.ids.map((id) => { const r = byId.get(id).meta; return `<li><a href="${link.article(id)}">${Number(id)} ${esc(r.title)}</a> <span class="sub">${esc(r.subtitle)}</span></li>`; }).join('')}</ul></div>`).join('')}</div></section>`;
+  let h = `<div class="col-home"><header class="col-hero"><div><h1>${SITE_NAME}</h1><p class="lede">先说清楚要解决的问题，再选方式、查资质、算代价，项目名放在最后。</p><p class="meta">${articles.length} 篇 · 六个子分类 · ${landings.length} 个导读页 · 2026 年 11 月修订版</p></div>${coverHtml(CONFIG.cover, link)}</header>`;
+  h += `<aside class="home-urgent" aria-label="紧急情况"><p>注射或手术以后出现下面的情况，立即联系做治疗的机构，联系不上去医院急诊</p><ul><li>皮肤发白、发灰、发紫，出现网状花纹，疼痛越来越重</li><li>视物模糊、视力下降、眼痛，直接去眼科急诊</li><li>呼吸困难、胸痛、咯血，嘴唇或喉咙发紧肿胀，直接打 120</li></ul><p class="go"><a href="${link.article('41')}">注射后的紧急信号</a><a href="${link.article('42')}">外科术后的紧急信号</a><a href="${link.landing('buanxin')}">做完不放心</a></p></aside>`;
+  h += `<section class="home-section"><h2>从这里读起</h2><div class="entries">${ENTRIES.map((e) => `<div><h3>${esc(e.name)}</h3><ul>${e.ids.map((id) => { const r = byId.get(id).meta; return `<li><a href="${link.article(id)}">第 ${Number(id)} 篇 ${esc(r.title)}</a><span class="sub">${esc(r.subtitle)}</span></li>`; }).join('')}</ul></div>`).join('')}</div></section>`;
+  h += `<div class="home-pair"><section><h2>按问题</h2>${navList(PROBLEMS, link)}</section><section><h2>按处境</h2>${navList(NEEDS, link)}</section></div>`;
   h += `<section class="home-section navmap-wrap"><h2>按部位找问题</h2>${navMapSvg(link)}</section>`;
-  h += `<section class="home-section"><h2>按问题</h2>${navList(PROBLEMS, link)}</section>`;
-  h += `<section class="home-section"><h2>按处境</h2>${navList(NEEDS, link)}</section>`;
-  h += `<section class="home-section"><h2>全部篇目</h2><div class="search"><label class="sr" for="toc-search">搜索篇目</label><input type="search" id="toc-search" placeholder="搜索篇目，如 透明质酸、恢复期、价格"><output id="toc-count"></output></div>`;
-  for (const cat of CATEGORIES) {
+  h += `<section class="home-section"><h2>六个子分类</h2><div class="cat-cards">`;
+  CATEGORIES.forEach((cat, i) => {
     const list = articles.filter((a) => a.meta.category === cat);
-    h += `<div class="toc-group"><p class="toc-cat">${esc(cat)}</p><ul class="toc">${list.map((a) => { const m = a.meta; const text = esc(`${m.title} ${m.subtitle} ${m.category} ${m.summary}`); return `<li data-text="${text}"><span class="no">${m.id}</span><a href="${link.article(m.id)}"><span class="t">${esc(m.title)}</span> <span class="sub">${esc(m.subtitle)}</span></a><span></span></li>`; }).join('')}</ul></div>`;
-  }
-  h += `</section>`;
-  return { title: SITE_NAME, body: `<div>${h}</div>`, desc: CONFIG.description, type: 'website' };
+    h += `<div class="cat-card"><div class="hd"><a href="${link.category(i + 1)}">${esc(cat)}</a><span class="cnt">${list.length} 篇</span></div><p>${esc(CAT_INTRO[cat])}</p><ul>${list.slice(0, 3).map((a) => `<li><a href="${link.article(a.meta.id)}"><span class="no">${a.meta.id}</span><span class="t">${esc(a.meta.title)}</span></a></li>`).join('')}</ul><a class="all" href="${link.category(i + 1)}">全部 ${list.length} 篇</a></div>`;
+  });
+  h += `</div></section></div>`;
+  return { title: SITE_NAME, body: h, desc: CONFIG.description, type: 'website', frame: 'wide' };
 }
 
 function refsPage(link) {
@@ -294,7 +334,10 @@ function notFoundPage(link) {
 }
 
 // ---------- 输出 ----------
-const CSS = fs.readFileSync(path.join(ROOT, 'tools/site.css'), 'utf-8') + FIGURE_CSS;
+const TOKENS = fs.readFileSync(path.join(ROOT, 'tools/tokens.css'), 'utf-8');
+const CSS = TOKENS + fs.readFileSync(path.join(ROOT, 'tools/site.css'), 'utf-8') + FIGURE_CSS;
+// 读者手动选的深浅色记在本机，样式表加载前先设好，避免闪一下
+const THEME_BOOT = `try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}`;
 const JS_FIG = fs.readFileSync(path.join(ROOT, 'tools/figures-runtime.js'), 'utf-8');
 const JS_SITE = fs.readFileSync(path.join(ROOT, 'tools/site.js'), 'utf-8');
 
@@ -316,7 +359,8 @@ function allPages(target) {
 function shell(p, target) {
   const link = linker(target, p.depth);
   const mainId = target === 'spa' ? `main-${p.key}` : 'main';
-  return `${siteHeader(link, mainId)}<main id="${mainId}" tabindex="-1">${p.out.body}</main>${siteFooter(link, p.key === 'home')}`;
+  const frame = p.out.frame ? ` frame-${p.out.frame}` : '';
+  return `<div class="frame${frame}">${siteHeader(link, mainId, p.key)}<main id="${mainId}" tabindex="-1">${p.out.body}</main>${siteFooter(link, p.key === 'home')}</div>`;
 }
 
 // ---------- 搜索索引 ----------
@@ -363,6 +407,10 @@ const SITE = path.join(ROOT, process.env.SITE_OUT || 'site');
 fs.rmSync(SITE, { recursive: true, force: true });
 fs.mkdirSync(path.join(SITE, 'assets'), { recursive: true });
 fs.writeFileSync(path.join(SITE, 'assets/site.css'), CSS);
+fs.writeFileSync(path.join(SITE, 'assets/tokens.css'), TOKENS);
+// 封面图：content/covers/ 下的文件原样复制到 assets/covers/
+const COVERS = path.join(ROOT, 'content/covers');
+if (fs.existsSync(COVERS)) fs.cpSync(COVERS, path.join(SITE, 'assets/covers'), { recursive: true });
 fs.writeFileSync(path.join(SITE, 'assets/site.js'), JS_FIG + '\n' + JS_SITE);
 fs.writeFileSync(path.join(SITE, 'assets/search-index.json'), JSON.stringify(SEARCH_INDEX));
 fs.writeFileSync(path.join(SITE, 'assets/favicon.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#ffffff"/><rect x="6" y="6" width="52" height="52" rx="9" fill="none" stroke="#1f4a38" stroke-width="5"/><text x="32" y="43" text-anchor="middle" font-family="PingFang SC,Noto Sans CJK SC,Microsoft YaHei,sans-serif" font-size="30" font-weight="700" fill="#262626">医</text></svg>`);
@@ -378,7 +426,8 @@ for (const p of multi) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(title)}</title>
-${m}<link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
+${m}<script>${THEME_BOOT}</script>
+<link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="${up}assets/site.css">
 <script src="${up}assets/site.js" defer></script>
 </head>
@@ -413,6 +462,7 @@ fs.mkdirSync(PREVIEW, { recursive: true });
 const sections = allPages('spa').filter((p) => p.key !== '404').map((p) => `<section class="page" id="p-${p.key}" data-title="${esc(p.out.title)}"${p.key === 'home' ? '' : ' hidden'}>${shell(p, 'spa')}</section>`).join('\n');
 const preview = `<title>${SITE_NAME}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<script>${THEME_BOOT}</script>
 <style>${CSS}</style>
 <div id="app" class="spa">
 ${sections}

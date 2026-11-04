@@ -140,7 +140,7 @@ const compare = {
   html: () => {
     const chip = (g, v, label, on) => `<button type="button" class="chip${on ? ' on' : ''}" data-g="${g}" data-v="${v}" aria-pressed="${on}">${label}</button>`;
     const rows = COMPARE_ROWS.map((r) => `<tr data-cat="${r[1]}" data-rev="${r[5]}" data-rec="${r[6]}"><th scope="row">${esc(r[0])}</th><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td><span class="rev rev${r[5]}">${REV[r[5]]}</span></td></tr>`).join('');
-    return `<div class="fig-compare" data-fig="compare"><div class="cmp-ctl"><div class="cmp-g" role="group" aria-label="类别">${chip('cat', '', '全部', true)}${chip('cat', '光电', '光电', false)}${chip('cat', '注射', '注射', false)}${chip('cat', '外科', '外科', false)}</div><div class="cmp-g" role="group" aria-label="可逆性">${chip('rev', '', '不限', true)}${chip('rev', '1', '可逆性较好', false)}${chip('rev', '2', '部分可逆', false)}${chip('rev', '3', '难以回头', false)}</div><label class="cmp-sort"><input type="checkbox" id="cmp-sort"> 按恢复期从短到长</label></div><div class="table-wrap"><table class="cmp-table"><thead><tr><th scope="col">项目</th><th scope="col">恢复期的日常影响</th><th scope="col">效果出现</th><th scope="col">维持时间</th><th scope="col">能否回头</th></tr></thead><tbody>${rows}</tbody></table></div><p class="cmp-count" aria-live="polite"></p></div>`;
+    return `<div class="fig-compare" data-fig="compare"><div class="cmp-ctl"><div class="cmp-g" role="group" aria-label="类别">${chip('cat', '', '全部', true)}${chip('cat', '光电', '光电', false)}${chip('cat', '注射', '注射', false)}${chip('cat', '外科', '外科', false)}</div><div class="cmp-g" role="group" aria-label="可逆性">${chip('rev', '', '不限', true)}${chip('rev', '1', '可逆性较好', false)}${chip('rev', '2', '部分可逆', false)}${chip('rev', '3', '难以回头', false)}</div><label class="cmp-sort"><input type="checkbox" id="cmp-sort"> 按恢复期从短到长</label></div><div class="table-wrap" tabindex="0" role="region" aria-label="对照表，可左右滑动"><table class="cmp-table"><thead><tr><th scope="col">项目</th><th scope="col">恢复期的日常影响</th><th scope="col">效果出现</th><th scope="col">维持时间</th><th scope="col">能否回头</th></tr></thead><tbody>${rows}</tbody></table></div><p class="cmp-count" aria-live="polite"></p></div>`;
   },
 };
 
@@ -208,27 +208,27 @@ const fillers = {
 export const FIGURES2 = { verify, triage, surgery, dispute, money, grades, reversibility, compare, spt, hair, fillers };
 
 export const FIGURE2_CSS = `
-.fig-svg .outline-r{stroke:var(--fg);stroke-width:1}
-.fig-svg .beam{fill:var(--fg);opacity:.25} .fig-svg .beam-in{fill:var(--fg);opacity:.12}
-.fig-svg .target{fill:var(--fg);transition:r .4s} .fig-svg .vessel{fill:var(--bg);stroke:var(--fg);stroke-width:1.5}
-.fig-svg .vessel.hot{fill:var(--fg)} .fig-svg .halo{fill:var(--fg);opacity:0;transition:r .9s,rx .9s,ry .9s,opacity .9s}
-.fig-svg .bar{fill:var(--fill-3)} .fig-svg .bar-faint{fill:var(--fill-2);stroke:var(--fg);stroke-width:.6;stroke-dasharray:3 2}
-.fig-svg .hit{fill:transparent;cursor:pointer} .fig-svg .fl-row:focus{outline:none} .fig-svg .fl-row.on .hit,.fig-svg .fl-row:focus .hit{fill:var(--fg);fill-opacity:.07}
-.fig-svg .hair-s{stroke:var(--fg);stroke-width:2.4;stroke-linecap:round} .fig-svg .hair-s.thin{stroke-width:1;opacity:.6}
-.fig-svg .bulb{fill:var(--fg)} .fig-svg .bulb.rest{fill:var(--bg);stroke:var(--fg);stroke-width:1} .fig-svg .bulb.dead{fill:var(--fill-2);stroke:var(--muted);stroke-width:1;stroke-dasharray:2 2}
-.chip{font:inherit;font-family:var(--sans);font-size:13px;color:var(--fg);background:var(--bg);border:1px solid var(--rule);padding:3px 10px;cursor:pointer}
-.chip.on{border-color:var(--fg);background:var(--panel)} .chip:hover{border-color:var(--fg)}
+.fig-svg .outline-r{stroke:var(--ink);stroke-width:1}
+.fig-svg .beam{fill:var(--ink);opacity:.25} .fig-svg .beam-in{fill:var(--ink);opacity:.12}
+.fig-svg .target{fill:var(--ink);transition:r .4s} .fig-svg .vessel{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.fig-svg .vessel.hot{fill:var(--ink)} .fig-svg .halo{fill:var(--ink);opacity:0;transition:r .9s,rx .9s,ry .9s,opacity .9s}
+.fig-svg .bar{fill:var(--fill-3)} .fig-svg .bar-faint{fill:var(--fill-2);stroke:var(--ink);stroke-width:.6;stroke-dasharray:3 2}
+.fig-svg .hit{fill:transparent;cursor:pointer} .fig-svg .fl-row:focus{outline:none} .fig-svg .fl-row.on .hit,.fig-svg .fl-row:focus .hit{fill:var(--ink);fill-opacity:.07}
+.fig-svg .hair-s{stroke:var(--ink);stroke-width:2.4;stroke-linecap:round} .fig-svg .hair-s.thin{stroke-width:1;opacity:.6}
+.fig-svg .bulb{fill:var(--ink)} .fig-svg .bulb.rest{fill:var(--paper);stroke:var(--ink);stroke-width:1} .fig-svg .bulb.dead{fill:var(--fill-2);stroke:var(--ink3);stroke-width:1;stroke-dasharray:2 2}
+.chip{font:inherit;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:3px 10px;cursor:pointer}
+.chip.on{border-color:var(--ink);background:var(--panel)} .chip:hover{border-color:var(--ink)}
 .cmp-ctl,.spt-ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0 0 8px;font-family:var(--sans);font-size:13px}
 .cmp-g{display:flex;flex-wrap:wrap;gap:6px}
 .cmp-sort{display:flex;gap:6px;align-items:center}
 .cmp-table th[scope=row]{font-family:var(--sans);font-weight:600;white-space:nowrap;text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule)}
-.rev{font-family:var(--sans);font-size:12px;border:1px solid var(--fg);padding:0 5px;white-space:nowrap} .rev2{background:var(--fill-1)} .rev3{background:var(--fill-2)}
-.cmp-count{font-family:var(--sans);font-size:12px;color:var(--muted);margin:4px 0 0}
-.spt-fire{font:inherit;font-family:var(--sans);font-size:14px;color:var(--fg);background:var(--bg);border:1.5px solid var(--fg);padding:4px 16px;cursor:pointer}
+.rev{font-family:var(--sans);font-size:12px;border:1px solid var(--ink);padding:0 5px;white-space:nowrap} .rev2{background:var(--fill-1)} .rev3{background:var(--fill-2)}
+.cmp-count{font-family:var(--sans);font-size:12px;color:var(--ink3);margin:4px 0 0}
+.spt-fire{font:inherit;font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--paper);border:1.5px solid var(--ink);padding:4px 16px;cursor:pointer}
 .spt-fire:hover{background:var(--panel)}
 .fl-panel{font-family:var(--sans);font-size:14px;line-height:1.7;border-top:1px solid var(--rule);padding-top:8px;min-height:4.8em}
 .fl-panel b{font-weight:600}
-.navmap{display:block} .navmap a text{fill:var(--fg)} .navmap a:hover text,.navmap a:focus text{text-decoration:underline} .navmap a:focus{outline:none}
-.navmap .pt{fill:var(--fg)} .navmap .lead{stroke:var(--muted);stroke-width:.8}
+.navmap{display:block} .navmap a text{fill:var(--ink)} .navmap a:hover text,.navmap a:focus text{text-decoration:underline} .navmap a:focus{outline:none}
+.navmap .pt{fill:var(--ink)} .navmap .lead{stroke:var(--ink3);stroke-width:.8}
 @media (max-width:520px){.navmap-wrap{display:none}}
 `;

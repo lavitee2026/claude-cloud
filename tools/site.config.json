@@ -1,7 +1,12 @@
 {
-  "title": "医美选择",
-  "description": "做医美之前，把要解决的问题、可选的方式、机构与医生的资质和自己能接受的代价想清楚。全栏 44 篇，按问题、按处境都有导读。",
-  "baseUrl": "https://lavitee2026.github.io/claude-cloud/",
-  "cname": "",
-  "author": "于意云"
+ "title": "医美选择",
+ "description": "做医美之前，把要解决的问题、可选的方式、机构与医生的资质和自己能接受的代价想清楚。全栏 44 篇，按问题、按处境都有导读。",
+ "baseUrl": "https://lavitee2026.github.io/claude-cloud/",
+ "cname": "",
+ "author": "于意云",
+ "parent": {
+  "name": "sooogooo.plus",
+  "url": "https://www.sooogooo.plus/"
+ },
+ "cover": ""
 }
