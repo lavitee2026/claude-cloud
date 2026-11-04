@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lavitee2026.github.io/claude-cloud/sitemap.xml
