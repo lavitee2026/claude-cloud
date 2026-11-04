@@ -11,6 +11,8 @@ const CONFIG = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/site.config.jso
 const SITE_NAME = CONFIG.title;
 // SITE_BASE 为空字符串时不写死域名（打包版），由 set-domain.py 在部署时补上
 const BASE = process.env.SITE_BASE !== undefined ? process.env.SITE_BASE : (CONFIG.cname ? `https://${CONFIG.cname}/` : CONFIG.baseUrl);
+// 日常计数用中文数字
+const zhNum = (n) => (n >= 0 && n <= 10 ? '零一二三四五六七八九十'[n] : String(n));
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // ---------- 数据 ----------
@@ -25,8 +27,9 @@ const landingBySlug = new Map(landings.map((d) => [d.meta.id, d]));
 
 // ---------- 链接 ----------
 // target: 'multi'（depth 为页面所在目录层级）或 'spa'
-function linker(target, depth) {
-  const up = '../'.repeat(depth);
+// prefix 给定时用它代替相对上级目录，目前只有带域名构建的 404 页使用
+function linker(target, depth, prefix) {
+  const up = prefix ?? '../'.repeat(depth);
   return {
     home: () => (target === 'spa' ? '#home' : `${up}index.html`),
     article: (id) => (target === 'spa' ? `#a-${id}` : `${up}a/${id}.html`),
@@ -138,11 +141,11 @@ function siteHeader(link, mainId, key) {
 function siteFooter(link, full) {
   const head = full ? `<p>${esc(DISCLAIMER)}</p><p>${esc(INTEREST)}</p>` : `<p>医美科普，不构成诊断或治疗建议，不推荐任何机构、医生或产品。<a href="${link.about()}">完整声明</a></p>`;
   const P = CONFIG.parent;
-  return `<footer class="sitefoot"><div class="in">${head}<p>${SITE_NAME}${P && P.name ? ` · ${esc(P.name)}` : ''} · 于意云 何 · 2026 年 11 月修订版</p></div></footer>`;
+  return `<footer class="sitefoot"><div class="in">${head}<p>${SITE_NAME}${P && P.name ? ` · ${esc(P.name)}` : ''} · 于意云 何 · ${esc(CONFIG.edition)}修订版</p></div></footer>`;
 }
 
 function coverHtml(src, link, cls) {
-  const url = src ? link.asset(src) : null;
+  const url = src ? link.asset(`covers/${src}`) : null;
   return url ? `<figure class="cover ${cls || ''}"><img src="${esc(url)}" alt="" loading="lazy" decoding="async"></figure>` : '';
 }
 
@@ -241,15 +244,15 @@ function navMapSvg(link) {
 }
 
 function homePage(link) {
-  let h = `<div class="col-home"><header class="col-hero"><div><h1>${SITE_NAME}</h1><p class="lede">先说清楚要解决的问题，再选方式、查资质、算代价，项目名放在最后。</p><p class="meta">${articles.length} 篇 · 六个子分类 · ${landings.length} 个导读页 · 2026 年 11 月修订版</p></div>${coverHtml(CONFIG.cover, link)}</header>`;
+  let h = `<div class="col-home"><header class="col-hero"><div><h1>${SITE_NAME}</h1><p class="lede">先说清楚要解决的问题，再选方式、查资质、算代价，项目名放在最后。</p><p class="meta">${articles.length} 篇 · ${zhNum(CATEGORIES.length)}个子分类 · ${landings.length} 个导读页 · ${esc(CONFIG.edition)}修订版</p></div>${coverHtml(CONFIG.cover, link)}</header>`;
   h += `<aside class="home-urgent" aria-label="紧急情况"><p>注射或手术以后出现下面的情况，立即联系做治疗的机构，联系不上去医院急诊</p><ul><li>皮肤发白、发灰、发紫，出现网状花纹，疼痛越来越重</li><li>视物模糊、视力下降、眼痛，直接去眼科急诊</li><li>呼吸困难、胸痛、咯血，嘴唇或喉咙发紧肿胀，直接打 120</li></ul><p class="go"><a href="${link.article('41')}">注射后的紧急信号</a><a href="${link.article('42')}">外科术后的紧急信号</a><a href="${link.landing('buanxin')}">做完不放心</a></p></aside>`;
   h += `<section class="home-section"><h2>从这里读起</h2><div class="entries">${ENTRIES.map((e) => `<div><h3>${esc(e.name)}</h3><ul>${e.ids.map((id) => { const r = byId.get(id).meta; return `<li><a href="${link.article(id)}">第 ${Number(id)} 篇 ${esc(r.title)}</a><span class="sub">${esc(r.subtitle)}</span></li>`; }).join('')}</ul></div>`).join('')}</div></section>`;
   h += `<div class="home-pair"><section><h2>按问题</h2>${navList(PROBLEMS, link)}</section><section><h2>按处境</h2>${navList(NEEDS, link)}</section></div>`;
   h += `<section class="home-section navmap-wrap"><h2>按部位找问题</h2>${navMapSvg(link)}</section>`;
-  h += `<section class="home-section"><h2>六个子分类</h2><div class="cat-cards">`;
+  h += `<section class="home-section"><h2>${zhNum(CATEGORIES.length)}个子分类</h2><div class="cat-cards">`;
   CATEGORIES.forEach((cat, i) => {
     const list = articles.filter((a) => a.meta.category === cat);
-    h += `<div class="cat-card"><div class="hd"><a href="${link.category(i + 1)}">${esc(cat)}</a><span class="cnt">${list.length} 篇</span></div><p>${esc(CAT_INTRO[cat])}</p><ul>${list.slice(0, 3).map((a) => `<li><a href="${link.article(a.meta.id)}"><span class="no">${a.meta.id}</span><span class="t">${esc(a.meta.title)}</span></a></li>`).join('')}</ul><a class="all" href="${link.category(i + 1)}">全部 ${list.length} 篇</a></div>`;
+    h += `<div class="cat-card"><div class="hd"><a href="${link.category(i + 1)}">${esc(cat)}</a><span class="cnt">${list.length} 篇</span></div><p>${esc(CAT_INTRO[cat] || '')}</p><ul>${list.slice(0, 3).map((a) => `<li><a href="${link.article(a.meta.id)}"><span class="no">${a.meta.id}</span><span class="t">${esc(a.meta.title)}</span></a></li>`).join('')}</ul><a class="all" href="${link.category(i + 1)}">全部 ${list.length} 篇</a></div>`;
   });
   h += `</div></section></div>`;
   return { title: SITE_NAME, body: h, desc: CONFIG.description, type: 'website', frame: 'wide' };
@@ -275,13 +278,13 @@ function aboutPage(link) {
 function excerpt(s, n = 60) { s = String(s); const i = s.indexOf('。'); const first = i > 0 && i < n ? s.slice(0, i + 1) : s.slice(0, n) + '……'; return first; }
 
 function catalogPage(link) {
-  let h = `<div class="wrap"><header class="art-head"><h1 class="title">篇目</h1><p class="subtitle">六个子分类，共 ${articles.length} 篇</p></header>`;
+  let h = `<div class="wrap"><header class="art-head"><h1 class="title">篇目</h1><p class="subtitle">${zhNum(CATEGORIES.length)}个子分类，共 ${articles.length} 篇</p></header>`;
   CATEGORIES.forEach((cat, i) => {
     const list = articles.filter((a) => a.meta.category === cat);
     h += `<section class="cat-block"><h2><a href="${link.category(i + 1)}">${esc(cat)}</a><span class="cnt">${list.length} 篇</span></h2><ul class="toc">${list.map((a) => `<li><span class="no">${a.meta.id}</span><a href="${link.article(a.meta.id)}"><span class="t">${esc(a.meta.title)}</span> <span class="sub">${esc(a.meta.subtitle)}</span></a><span></span></li>`).join('')}</ul></section>`;
   });
   h += `</div>`;
-  return { title: '篇目', body: h, desc: `医美选择全部 ${articles.length} 篇，按决策框架、光电、注射、外科、机构与医生甄别、术后护理与风险六个子分类排列。`, type: 'website' };
+  return { title: '篇目', body: h, desc: `医美选择全部 ${articles.length} 篇，按${CATEGORIES.join('、')}${zhNum(CATEGORIES.length)}个子分类排列。`, type: 'website' };
 }
 
 const CAT_INTRO = {
@@ -298,13 +301,13 @@ function categoryPage(i, link) {
   const list = articles.filter((a) => a.meta.category === cat);
   const ctx = { link, docId: `c-${i + 1}` };
   let h = topbar(link, `<a href="${link.catalog()}">篇目</a>`);
-  h += `<div class="wrap"><header class="art-head"><p class="eyebrow">子分类 ${i + 1} / ${CATEGORIES.length}</p><h1 class="title">${esc(cat)}</h1><p class="subtitle">${esc(CAT_INTRO[cat])}</p></header><ul class="cards">`;
+  h += `<div class="wrap"><header class="art-head"><p class="eyebrow">子分类 ${i + 1} / ${CATEGORIES.length}</p><h1 class="title">${esc(cat)}</h1><p class="subtitle">${esc(CAT_INTRO[cat] || '')}</p></header><ul class="cards">`;
   for (const a of list) {
     const m = a.meta;
     h += `<li><a href="${link.article(m.id)}"><span class="no">第 ${Number(m.id)} 篇</span><span class="t">${esc(m.title)}</span><span class="sub">${esc(m.subtitle)}</span></a><p>${inline(String(m.takeaway), ctx)}</p></li>`;
   }
   h += `</ul></div>`;
-  return { title: cat, body: h, desc: `${cat}：${CAT_INTRO[cat]}`.replace('：', '，'), type: 'website' };
+  return { title: cat, body: h, desc: (CAT_INTRO[cat] ? `${cat}，${CAT_INTRO[cat]}` : cat), type: 'website' };
 }
 
 function guidesPage(link) {
@@ -352,12 +355,12 @@ function allPages(target) {
   pages.push({ key: 'search', file: 'search.html', depth: 0, render: (l) => searchPage(l), prio: '0.3' });
   pages.push({ key: 'refs', file: 'refs.html', depth: 0, render: (l) => refsPage(l), prio: '0.4' });
   pages.push({ key: 'about', file: 'about.html', depth: 0, render: (l) => aboutPage(l), prio: '0.4' });
-  pages.push({ key: '404', file: '404.html', depth: 0, render: (l) => notFoundPage(l), noindex: true });
-  return pages.map((p) => ({ ...p, out: p.render(linker(target, p.depth)) }));
+  pages.push({ key: '404', file: '404.html', depth: 0, render: (l) => notFoundPage(l), noindex: true, prefix: target === 'multi' && BASE ? BASE : undefined });
+  return pages.map((p) => ({ ...p, out: p.render(linker(target, p.depth, p.prefix)) }));
 }
 
 function shell(p, target) {
-  const link = linker(target, p.depth);
+  const link = linker(target, p.depth, p.prefix);
   const mainId = target === 'spa' ? `main-${p.key}` : 'main';
   const frame = p.out.frame ? ` frame-${p.out.frame}` : '';
   return `<div class="frame${frame}">${siteHeader(link, mainId, p.key)}<main id="${mainId}" tabindex="-1">${p.out.body}</main>${siteFooter(link, p.key === 'home')}</div>`;
@@ -418,7 +421,7 @@ fs.writeFileSync(path.join(SITE, '.nojekyll'), '');
 if (CONFIG.cname && BASE) fs.writeFileSync(path.join(SITE, 'CNAME'), CONFIG.cname + '\n');
 const multi = allPages('multi');
 for (const p of multi) {
-  const up = '../'.repeat(p.depth);
+  const up = p.prefix ?? '../'.repeat(p.depth);
   const { m, title } = headMeta(p);
   const html = `<!doctype html>
 <html lang="zh-CN">

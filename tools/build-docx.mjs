@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 生成 docx：dist/医美选择-正文.docx、dist/医美选择-工程化说明.docx
+// 生成 docx：dist/医美选择-正文.docx、dist/医美选择-工程化说明.docx、dist/医美选择-维护手册.docx
 // 版式参数见工程化说明「docx 版式」一节；依赖 build/figures/*.png，先运行 npm run figures。
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,6 +8,8 @@ import { ROOT, listDocs, loadDoc, splitInline, DISCLAIMER, INTEREST, SIGNATURE }
 import { FIGURES } from './figures.mjs';
 
 const require = createRequire(import.meta.url);
+// 版次写在 tools/site.config.json 的 edition，网站和 docx 共用
+const CONFIG = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/site.config.json'), 'utf-8'));
 const docx = require(require.resolve('docx', { paths: [ROOT, '/opt/node22/lib/node_modules', '/opt/node-tools/node_modules'] }));
 const {
   Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle,
@@ -28,6 +30,8 @@ const TEXT_W = PAGE_W - MARGIN.left - MARGIN.right; // 9306 twips
 const AUTO = LineRuleType.AUTO;
 const LINE = { line: 360, lineRule: AUTO }; // 1.5 倍行距
 let CITES = true; // 工程化说明里的 [1] 是示例，不转上标
+// 正文 docx 两端对齐；技术文件里网址、命令多，两端对齐会把字距拉开，改为左对齐
+let JUSTIFY = AlignmentType.JUSTIFIED;
 const INDENT = 480;
 
 const run = (text, o = {}) => new TextRun({ text, font: o.font || F.serif, size: o.size || SZ.body, color: o.color || C.text, bold: !!o.bold, superScript: !!o.sup });
@@ -43,8 +47,8 @@ const border = (color, size) => ({ style: BorderStyle.SINGLE, color, size, space
 
 // ---------- 段落构件 ----------
 const P = {
-  body: (text) => new Paragraph({ children: runsOf(text), indent: { firstLine: INDENT }, spacing: { ...LINE, before: 0, after: 80 }, alignment: AlignmentType.JUSTIFIED }),
-  plain: (text, o = {}) => new Paragraph({ children: runsOf(text, o), spacing: { ...LINE, before: o.before ?? 0, after: o.after ?? 80 }, alignment: o.align || AlignmentType.JUSTIFIED, indent: o.indent }),
+  body: (text) => new Paragraph({ children: runsOf(text), indent: { firstLine: INDENT }, spacing: { ...LINE, before: 0, after: 80 }, alignment: JUSTIFY }),
+  plain: (text, o = {}) => new Paragraph({ children: runsOf(text, o), spacing: { ...LINE, before: o.before ?? 0, after: o.after ?? 80 }, alignment: o.align || JUSTIFY, indent: o.indent }),
   h1: (text) => new Paragraph({ children: [run(text, { font: F.sans, size: SZ.h1, bold: true })], spacing: { before: 360, after: 160, line: 300, lineRule: AUTO }, keepNext: true, keepLines: true, border: { bottom: border(C.green, 4) } }),
   h2: (text) => new Paragraph({ children: [run(text, { font: F.sans, size: SZ.h2, bold: true })], spacing: { before: 240, after: 100, line: 300, lineRule: AUTO }, keepNext: true }),
   label: (text) => new Paragraph({ children: [run(text, { font: F.sans, size: SZ.body, bold: true })], spacing: { before: 200, after: 80 }, keepNext: true }),
@@ -82,7 +86,7 @@ function emergency(b) {
 let listInstance = 0;
 function orderedList(items) {
   listInstance += 1;
-  return items.map((it) => new Paragraph({ children: runsOf(it), numbering: { reference: 'num', level: 0, instance: listInstance }, spacing: { ...LINE, after: 40 }, alignment: AlignmentType.JUSTIFIED }));
+  return items.map((it) => new Paragraph({ children: runsOf(it), numbering: { reference: 'num', level: 0, instance: listInstance }, spacing: { ...LINE, after: 40 }, alignment: JUSTIFY }));
 }
 function bulletList(items) {
   return items.map((it) => new Paragraph({ children: runsOf(it), numbering: { reference: 'bullet', level: 0 }, spacing: { ...LINE, after: 40 } }));
@@ -194,7 +198,7 @@ async function buildBody() {
   const revised = listDocs('content/articles');
   const landings = listDocs('content/landing');
   const front = [];
-  front.push(...masthead('', '医美选择', '栏目全文合集 · 修订版', `2026 年 11 月 · ${revised.length} 篇与 ${landings.length} 个导读页`));
+  front.push(...masthead('', '医美选择', '栏目全文合集 · 修订版', `${CONFIG.edition} · ${revised.length} 篇与 ${landings.length} 个导读页`));
   front.push(P.h1('本册内容'));
   front.push(P.body('本册收入「医美选择」栏目全部篇目和导读页。全栏按证据优先的方式修订，疗效、风险、维持时间和法规要求逐条核对原始来源，正文用方括号数字标注，对应每篇末尾的参考文献；每篇的证据等级和来源说明放在文末。导读页按问题和按处境两种方式进入，列出该读的篇目和顺序。'));
   front.push(table(['编号', '子分类', '篇目'], revised.map((a) => [a.meta.id, a.meta.category, `${a.meta.title} · ${a.meta.subtitle}`]), [900, 2200, 6206]));
@@ -254,19 +258,22 @@ async function buildBody() {
   await save(doc, path.join(ROOT, 'dist/医美选择-正文.docx'));
 }
 
-// ---------- 工程化说明 docx ----------
-async function buildEngineering() {
+// ---------- 工程化说明与维护手册 docx ----------
+// 两份技术文件同一套版式，文中的 [1] 是示例，不转上标
+async function buildTechDoc(src, name) {
   CITES = false;
-  const d = loadDoc(path.join(ROOT, 'docs/工程化说明.md'));
+  JUSTIFY = AlignmentType.LEFT;
+  const d = loadDoc(path.join(ROOT, src));
   const m = d.meta;
   const children = [...masthead('', m.title, m.subtitle, `版本 ${m.version} · ${m.date}`)];
   children.push(...blocks(d.blocks));
   const doc = new Document({
-    creator: '于意云', title: '医美选择 工程化说明', styles: STYLES, numbering: NUMBERING,
-    sections: [{ properties: SECTION_PROPS, footers: { default: footer('医美选择 · 工程化说明') }, children }],
+    creator: '于意云', title: `医美选择 ${name}`, styles: STYLES, numbering: NUMBERING,
+    sections: [{ properties: SECTION_PROPS, footers: { default: footer(`医美选择 · ${name}`) }, children }],
   });
-  await save(doc, path.join(ROOT, 'dist/医美选择-工程化说明.docx'));
+  await save(doc, path.join(ROOT, `dist/医美选择-${name}.docx`));
 }
 
 await buildBody();
-await buildEngineering();
+await buildTechDoc('docs/工程化说明.md', '工程化说明');
+await buildTechDoc('docs/维护手册.md', '维护手册');

@@ -7,12 +7,16 @@
     "figures": "node tools/render-figures.mjs",
     "site": "node tools/build-site.mjs",
     "docx": "node tools/build-docx.mjs",
-    "build": "npm run lint; npm run figures && npm run site && npm run og && npm run docx",
+    "build": "npm run lint; npm run figures && npm run site && npm run og && npm run docx && npm run check",
     "og": "node tools/og-images.mjs",
     "preview": "python3 -m http.server 8080 --directory site",
-    "package": "node tools/package-site.mjs"
+    "package": "node tools/package-site.mjs",
+    "check": "python3 tools/check-links.py site",
+    "a11y": "node tools/check-a11y.mjs"
   },
   "devDependencies": {
+    "axe-core": "4.10.2",
+    "docx": "9.7.1",
     "mermaid": "11.4.1"
   }
 }

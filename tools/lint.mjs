@@ -11,7 +11,7 @@ import { FIGURES } from './figures.mjs';
 // level: error 必须改；warn 需要作者判断
 export const RULES = [
   { id: 'bold', level: 'error', desc: '不加粗', re: /\*\*[^*]+\*\*/g },
-  { id: 'dash', level: 'error', desc: '非必要不用破折号', re: /——|—|--(?!-)/g },
+  { id: 'dash', level: 'error', desc: '非必要不用破折号', re: /——|—|(?<=[\u4e00-\u9fff])--(?!-)|(?<!-)--(?=[\u4e00-\u9fff])/g }, // 命令参数与变量名里的 -- 不算
   { id: 'colon', level: 'warn', desc: '非必要不用冒号（引出话术引文除外）', re: /：(?!「)/g },
   { id: 'label-colon', level: 'error', desc: '标签词冒号', re: /^[一-鿿]{1,8}：/gm },
   { id: 'dquote', level: 'warn', desc: '双引号改用直角引号「」', re: /[“”"]/g },

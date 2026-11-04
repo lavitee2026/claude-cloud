@@ -14,10 +14,26 @@ root = Path(__file__).resolve().parent
 BLOCK = re.compile(r'<!--site-url-begin-->.*?<!--site-url-end-->\n?', re.S)
 MARK = re.compile(r'<!--site-url:([^:]+):([^>]+?)-->')
 
+# 404 页会在任意深度的缺失网址下显示，相对链接会错位，所以改成完整网址；上次写入的域名记在注释里，换域名时整体替换
+BASE_MARK = re.compile(r'<!--site-base:([^>]*)-->')
+def fix_404(t):
+    old = BASE_MARK.search(t)
+    if old:
+        o = old.group(1)
+        if o == base:
+            return t
+        # 只换本站页面与资源的链接（旧域名后面还跟着文件），上层站点的链接不动
+        t = re.sub(r'(\s(?:href|src)=")' + re.escape(o) + r'(?=[^"])', lambda m: m.group(1) + base, t)
+        return t.replace(old.group(0), f'<!--site-base:{base}-->')
+    t = re.sub(r'(\s(?:href|src)=")(?!https?:|#|/|data:|mailto:)', lambda m: m.group(1) + base, t)
+    return t.replace('<head>', f'<head>\n<!--site-base:{base}-->', 1)
+
 n = 0
 for f in root.rglob('*.html'):
-    t = f.read_text(encoding='utf-8')
-    t = BLOCK.sub('', t)
+    t0 = f.read_text(encoding='utf-8')
+    t = BLOCK.sub('', t0)
+    if f.name == '404.html' and f.parent == root:
+        t = fix_404(t)
     def repl(m):
         path, key = m.group(1), m.group(2)
         url = base + ('' if path == 'index.html' else path)
@@ -27,7 +43,7 @@ for f in root.rglob('*.html'):
                 f'<meta property="og:image" content="{og}">\n<meta property="og:image:width" content="1200">\n'
                 '<meta property="og:image:height" content="630"><!--site-url-end-->')
     t2, k = MARK.subn(repl, t)
-    if k:
+    if t2 != t0:
         f.write_text(t2, encoding='utf-8'); n += 1
 
 pages = json.loads((root / 'sitemap.json').read_text(encoding='utf-8'))
