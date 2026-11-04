@@ -180,7 +180,14 @@ const botox = {
   controls: true,
 };
 
-export const FIGURES = { decision, depth, timeline, face, botox };
+// ---------- 06 维持成本计算器（交互，无静态图） ----------
+const cost = {
+  kind: 'interactive', noPng: true, svg: () => '',
+  alt: '维持成本计算器',
+  caption: '一年的次数按十二除以维持月数估算，数字只作估算，维持时间以医生对你的判断为准。',
+};
+
+export const FIGURES = { decision, depth, timeline, face, botox, cost };
 
 // 图的样式，站点与离线渲染共用
 export const FIGURE_CSS = `

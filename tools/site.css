@@ -140,3 +140,15 @@ figcaption { font-family: var(--sans); font-size: 13px; color: var(--muted); mar
 .footer p { margin: 0 0 6px; }
 @media (max-width: 480px) { body { font-size: 16px; } .masthead h1 { font-size: 32px; } h1.title { font-size: 25px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+.fig-cost { border-top: 1.5px solid var(--fg); border-bottom: 1.5px solid var(--fg); padding: 12px 0; font-family: var(--sans); font-size: 14px; }
+.cc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 16px; }
+.cc-f { display: grid; gap: 4px; min-width: 0; }
+.cc-f > span:first-child { color: var(--muted); font-size: 13px; }
+.cc-in { display: flex; align-items: baseline; gap: 6px; }
+.cc-in input { width: 100%; min-width: 0; font: inherit; font-size: 16px; color: var(--fg); background: var(--bg); border: 1px solid var(--fg); padding: 4px 8px; font-variant-numeric: tabular-nums; }
+.cc-in i { font-style: normal; color: var(--muted); white-space: nowrap; }
+.cc-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 16px; margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); }
+.cc-out dt { font-size: 12px; color: var(--muted); }
+.cc-out dd { margin: 0; font-size: 20px; font-variant-numeric: tabular-nums; }
+.cc-note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }

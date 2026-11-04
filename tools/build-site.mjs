@@ -67,6 +67,10 @@ function figureHtml(name, ctx) {
   if (fig.kind === 'mermaid') inner = fs.readFileSync(path.join(ROOT, 'build/figures', `${name}.svg`), 'utf-8');
   else if (name === 'face') inner = `<div class="fig-face" data-fig="face" data-default="nose" data-zones="${esc(JSON.stringify(FACE_ZONES))}"><div class="face-svg">${fig.svg()}</div><div class="face-panel" aria-live="polite"></div></div><p class="fig-hint">点选或用 Tab 键切换部位</p>`;
   else if (name === 'botox') inner = `<div class="fig-botox" data-fig="botox">${fig.svg()}<div class="bx-controls"><button type="button" aria-pressed="false">播放</button><label class="sr" for="bx-range-${ctx.docId}">注射后天数</label><input type="range" id="bx-range-${ctx.docId}" min="0" max="180" step="1" value="0"><output class="bx-day">注射后第 0 天</output></div><p class="bx-status" aria-live="polite"></p></div>`;
+  else if (name === 'cost') {
+    const f = (id, label, v, unit, step = '1') => `<label class="cc-f" for="cc-${id}"><span>${label}</span><span class="cc-in"><input type="number" inputmode="decimal" id="cc-${id}" min="0" step="${step}" value="${v}"><i>${unit}</i></span></label>`;
+    inner = `<div class="fig-cost" data-fig="cost"><div class="cc-grid">${f('price', '单次价格', 3000, '元', '100')}${f('months', '维持时间', 4, '个月', '0.5')}${f('extra', '第一年起始疗程另加', 0, '次')}${f('years', '打算坚持', 3, '年')}${f('days', '每次不方便见人', 2, '天')}</div><dl class="cc-out"><div><dt>一年约做</dt><dd id="cc-per">3 次</dd></div><div><dt>第一年花费</dt><dd id="cc-first">9,000 元</dd></div><div><dt>几年合计</dt><dd id="cc-total">27,000 元</dd></div><div><dt>一年的恢复天数</dt><dd id="cc-rec">6 天</dd></div></dl><p class="cc-note">示例数字可以直接改成医生给你的报价和估计。</p></div>`;
+  }
   else inner = fig.svg();
   return `<figure class="figure figure-${name}">${inner}<figcaption>${inline(fig.caption, ctx)}</figcaption></figure>`;
 }
@@ -144,7 +148,7 @@ function navList(items, link) {
 }
 
 function homePage(link) {
-  let h = `<header class="masthead"><h1>${SITE_NAME}</h1><p>栏目全文合集 · 44 篇 · 六个子分类 · 2026 年 11 月修订试点</p></header>`;
+  let h = `<header class="masthead"><h1>${SITE_NAME}</h1><p>栏目全文合集 · 44 篇 · 六个子分类 · 24 个导读页 · 2026 年 11 月修订版</p></header>`;
   h += `<aside class="home-urgent" aria-label="紧急情况"><p>注射或手术以后出现下面的情况，立即联系做治疗的机构，联系不上去医院急诊。</p><ul><li>皮肤发白、发灰、发紫，出现网状花纹，疼痛越来越重</li><li>视物模糊、视力下降、眼痛，直接去眼科急诊</li><li>呼吸困难、胸痛、咯血，嘴唇或喉咙发紧肿胀，直接打 120</li></ul><p class="go"><a href="${link.article('41')}">注射后的紧急信号</a> · <a href="${link.article('42')}">外科术后的紧急信号</a> · <a href="${link.landing('buanxin')}">做完不放心</a></p></aside>`;
   h += `<section class="home-section"><h2>从这里读起</h2><div class="entries">${ENTRIES.map((e) => `<div><h3>${esc(e.name)}</h3><ul>${e.ids.map((id) => { const r = byId.get(id).meta; return `<li><a href="${link.article(id)}">${Number(id)} ${esc(r.title)}</a> <span class="sub">${esc(r.subtitle)}</span></li>`; }).join('')}</ul></div>`).join('')}</div></section>`;
   h += `<section class="home-section"><h2>按问题</h2>${navList(PROBLEMS, link)}</section>`;
@@ -152,7 +156,7 @@ function homePage(link) {
   h += `<section class="home-section"><h2>全部篇目</h2><div class="search"><label class="sr" for="toc-search">搜索篇目</label><input type="search" id="toc-search" placeholder="搜索篇目，如 透明质酸、恢复期、价格"><output id="toc-count"></output></div>`;
   for (const cat of CATEGORIES) {
     const list = articles.filter((a) => a.meta.category === cat);
-    h += `<div class="toc-group"><p class="toc-cat">${esc(cat)}</p><ul class="toc">${list.map((a) => { const m = a.meta; const text = esc(`${m.title} ${m.subtitle} ${m.category} ${m.summary}`); return `<li data-text="${text}"><span class="no">${m.id}</span><a href="${link.article(m.id)}"><span class="t">${esc(m.title)}</span> <span class="sub">${esc(m.subtitle)}</span></a>${m.status === '修订' ? '<span class="tag">已修订</span>' : '<span></span>'}</li>`; }).join('')}</ul></div>`;
+    h += `<div class="toc-group"><p class="toc-cat">${esc(cat)}</p><ul class="toc">${list.map((a) => { const m = a.meta; const text = esc(`${m.title} ${m.subtitle} ${m.category} ${m.summary}`); return `<li data-text="${text}"><span class="no">${m.id}</span><a href="${link.article(m.id)}"><span class="t">${esc(m.title)}</span> <span class="sub">${esc(m.subtitle)}</span></a><span></span></li>`; }).join('')}</ul></div>`;
   }
   h += `</section>`;
   h += `<footer class="footer"><p>${esc(DISCLAIMER)}</p><p>${esc(INTEREST)}</p><p>于意云 何</p></footer>`;
@@ -160,7 +164,7 @@ function homePage(link) {
 }
 
 function refsPage(link) {
-  let h = topbar(link, '文献') + `<div class="wrap prose"><header class="art-head"><h1 class="title">文献总表</h1><p class="subtitle">已修订篇目的参考文献，按篇目排列</p></header>`;
+  let h = topbar(link, '文献') + `<div class="wrap prose"><header class="art-head"><h1 class="title">文献总表</h1><p class="subtitle">全部篇目的参考文献，按篇目排列</p></header>`;
   for (const d of revised) {
     const refs = d.blocks.find((b) => b.type === 'refs');
     if (!refs) continue;
@@ -171,7 +175,7 @@ function refsPage(link) {
 }
 
 function aboutPage(link) {
-  const h = topbar(link, '声明') + `<div class="wrap prose"><header class="art-head"><h1 class="title">声明</h1></header><h2>科普声明</h2><p>${esc(DISCLAIMER)}</p><h2>利益声明</h2><p>${esc(INTEREST)}</p><h2>证据与修订</h2><p>每篇末尾的证据等级与来源说明写在同一段，正文中的方括号数字对应文末的参考文献。标注「已修订」的篇目按证据优先的方式重新核查过，核查日期见工程化说明；其余篇目为原稿，试点确认后陆续修订。</p><p class="signature">${SIGNATURE}</p></div>`;
+  const h = topbar(link, '声明') + `<div class="wrap prose"><header class="art-head"><h1 class="title">声明</h1></header><h2>科普声明</h2><p>${esc(DISCLAIMER)}</p><h2>利益声明</h2><p>${esc(INTEREST)}</p><h2>证据与修订</h2><p>每篇末尾的证据等级与来源说明写在同一段，正文中的方括号数字对应文末的参考文献。全部篇目按证据优先的方式重新核查过，每篇的核查日期记录在内容源文件里；会过期的事实每六个月复核一次。</p><p class="signature">${SIGNATURE}</p></div>`;
   return { title: '声明', body: h };
 }
 

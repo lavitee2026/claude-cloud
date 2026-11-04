@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 生成 docx：dist/医美选择-正文-试点.docx、dist/医美选择-工程化说明.docx
+// 生成 docx：dist/医美选择-正文.docx、dist/医美选择-工程化说明.docx
 // 版式参数见工程化说明「docx 版式」一节；依赖 build/figures/*.png，先运行 npm run figures。
 import fs from 'node:fs';
 import path from 'node:path';
@@ -133,6 +133,7 @@ function pngSize(file) {
   return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
 }
 function figure(name, maxPx) {
+  if (FIGURES[name].noPng) return [];
   const file = path.join(ROOT, 'build/figures', `${name}.png`);
   const { w, h } = pngSize(file);
   const target = Math.min(maxPx, w / 2);
@@ -193,18 +194,10 @@ async function buildBody() {
   const revised = listDocs('content/articles');
   const landings = listDocs('content/landing');
   const front = [];
-  front.push(...masthead('', '医美选择', '栏目全文合集 · 修订试点', '2026 年 11 月 · 试点五篇与两个导读页'));
+  front.push(...masthead('', '医美选择', '栏目全文合集 · 修订版', `2026 年 11 月 · ${revised.length} 篇与 ${landings.length} 个导读页`));
   front.push(P.h1('本册内容'));
-  front.push(P.body('本册是「医美选择」栏目修订的试点样张，收入两个导读页和五篇修订稿。修订按证据优先的方式进行，疗效、风险、维持时间和法规要求逐条核对原始来源，正文用方括号数字标注，对应每篇末尾的参考文献；每篇的证据等级和来源说明放在文末。其余 39 篇在试点确认后按同一方式修订。'));
-  front.push(table(['部分', '篇目', '说明'], [
-    ['导读', '凹陷与容量不足', '按问题进入'],
-    ['导读', '做完不放心', '按处境进入'],
-    ['决策框架', '第 1 篇 医美选择 · 做决定之前的五个问题', '支柱页'],
-    ['光电类项目', '第 12 篇 光电项目总览 · 光、激光、射频、超声各做什么', '总览'],
-    ['注射类项目', '第 20 篇 肉毒毒素 · 除皱、瘦脸与间隔', '项目页'],
-    ['注射类项目', '第 24 篇 注射的高风险部位 · 鼻、眉间、额颞与血管栓塞', '风险'],
-    ['术后护理与风险', '第 41 篇 注射后的紧急信号 · 血管栓塞', '识别'],
-  ], [1900, 5606, 1800]));
+  front.push(P.body('本册收入「医美选择」栏目全部篇目和导读页。全栏按证据优先的方式修订，疗效、风险、维持时间和法规要求逐条核对原始来源，正文用方括号数字标注，对应每篇末尾的参考文献；每篇的证据等级和来源说明放在文末。导读页按问题和按处境两种方式进入，列出该读的篇目和顺序。'));
+  front.push(table(['编号', '子分类', '篇目'], revised.map((a) => [a.meta.id, a.meta.category, `${a.meta.title} · ${a.meta.subtitle}`]), [900, 2200, 6206]));
   front.push(spacer());
   front.push(P.h1('声明'));
   front.push(P.note(DISCLAIMER, { before: 0 }));
@@ -220,7 +213,8 @@ async function buildBody() {
   front.push(...emergency({ items: ['皮肤发白、发灰、发紫，出现网状花纹，疼痛越来越重', '视物模糊、视力下降、眼痛，直接去眼科急诊', '呼吸困难、胸痛、咯血，嘴唇或喉咙发紧肿胀，直接打 120'], note: '注射或手术以后出现以上情况，立即联系做治疗的机构；联系不上，去医院急诊。' }));
 
   const children = [...front];
-  // 导读
+  // 导读：按问题在前，按处境在后
+  landings.sort((a, b) => (a.meta.kind === b.meta.kind ? 0 : a.meta.kind === '问题' ? -1 : 1));
   for (const g of landings) {
     const m = g.meta;
     children.push(P.pageBreak());
@@ -249,15 +243,15 @@ async function buildBody() {
     if (hit) { if (!hit.from.includes(r.from)) hit.from.push(r.from); } else merged.push({ key, text: r.text, from: [r.from] });
   }
   children.push(P.pageBreak());
-  children.push(...masthead('', '文献总表', `试点五篇引用的 ${merged.length} 份文献，按首次出现的篇目排列`));
+  children.push(...masthead('', '文献总表', `全栏引用的 ${merged.length} 份文献，按首次出现的篇目排列`));
   merged.forEach((r, i) => children.push(new Paragraph({ children: [run(`${i + 1}. `, { size: SZ.note }), run(r.text, { size: SZ.note }), run(`　引用篇目 ${r.from.join('、')}`, { size: SZ.note, font: F.kai })], indent: { left: 420, hanging: 420 }, spacing: { line: 300, lineRule: AUTO, after: 60 } })));
 
   const doc = new Document({
-    creator: '于意云', title: '医美选择 栏目全文合集 修订试点', description: '医美选择栏目修订试点样张',
+    creator: '于意云', title: '医美选择 栏目全文合集 修订版', description: '医美选择栏目全文合集修订版',
     styles: STYLES, numbering: NUMBERING,
-    sections: [{ properties: SECTION_PROPS, footers: { default: footer('医美选择 · 修订试点') }, children }],
+    sections: [{ properties: SECTION_PROPS, footers: { default: footer('医美选择 · 修订版') }, children }],
   });
-  await save(doc, path.join(ROOT, 'dist/医美选择-正文-试点.docx'));
+  await save(doc, path.join(ROOT, 'dist/医美选择-正文.docx'));
 }
 
 // ---------- 工程化说明 docx ----------

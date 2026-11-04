@@ -63,6 +63,7 @@ async function main() {
   // 2. PNG
   const runtime = fs.readFileSync(path.join(ROOT, 'tools/figures-runtime.js'), 'utf-8');
   for (const [name, fig] of Object.entries(FIGURES)) {
+    if (fig.noPng) continue;
     let inner;
     if (fig.kind === 'mermaid') inner = fs.readFileSync(path.join(OUT, `${name}.svg`), 'utf-8');
     else inner = fig.svg();

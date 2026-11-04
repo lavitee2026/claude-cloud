@@ -97,7 +97,26 @@
     draw();
   }
 
+  // ---------- 维持成本计算器 ----------
+  function initCost(root) {
+    var $ = function (id) { return root.querySelector('#cc-' + id); };
+    var fmt = function (n) { return Math.round(n).toLocaleString('zh-CN'); };
+    function run() {
+      var price = Math.max(0, +$('price').value || 0), months = Math.max(0.5, +$('months').value || 0.5);
+      var extra = Math.max(0, +$('extra').value || 0), years = Math.max(1, Math.round(+$('years').value || 1)), days = Math.max(0, +$('days').value || 0);
+      var per = 12 / months, first = per + extra, total = first + per * (years - 1);
+      $('per').textContent = (Math.round(per * 10) / 10) + ' 次';
+      $('first').textContent = fmt(first * price) + ' 元';
+      $('total').textContent = fmt(total * price) + ' 元';
+      $('total').previousElementSibling.textContent = years + ' 年合计';
+      $('rec').textContent = Math.round(per * days * 10) / 10 + ' 天';
+    }
+    root.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', run); });
+    run();
+  }
+
   function init(scope) {
+    (scope || document).querySelectorAll('[data-fig=cost]').forEach(function (el) { if (!el.__init) { el.__init = 1; initCost(el); } });
     (scope || document).querySelectorAll('[data-fig=face]').forEach(function (el) { if (!el.__init) { el.__init = 1; initFace(el); } });
     (scope || document).querySelectorAll('[data-fig=botox]').forEach(function (el) { if (!el.__init) { el.__init = 1; initBotox(el); } });
   }
