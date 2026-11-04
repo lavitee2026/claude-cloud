@@ -268,5 +268,10 @@ async function buildEngineering() {
   await save(doc, path.join(ROOT, 'dist/医美选择-工程化说明.docx'));
 }
 
-await buildBody();
-await buildEngineering();
+// 版式构件供其他合集复用（如 tools/build-diet-docx.mjs）
+export { docx, C, F, SZ, LINE, TEXT_W, run, runsOf, P, masthead, summaryBlock, takeaway, table, spacer, blocks, footer, NUMBERING, STYLES, SECTION_PROPS, save };
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  await buildBody();
+  await buildEngineering();
+}
