@@ -17,7 +17,7 @@ export const RULES = [
   { id: 'dquote', level: 'warn', desc: '双引号改用直角引号「」', re: /[“”"]/g },
   { id: 'banned', level: 'error', desc: '禁用词', re: /拆开|拆解|拆穿|一刀|砍掉|落盘|立住/g },
   { id: 'banned-chai', level: 'warn', desc: '禁用词「拆」', re: /拆(?!除|迁|线)/g },
-  { id: 'bigword', level: 'warn', desc: '刻意大词', re: /结构|机制|维度|路径|变现|赖以成立|本质上|量级|按亿计|成分|一向如此|这一层/g },
+  { id: 'bigword', level: 'warn', desc: '刻意大词', re: /结构|机制|维度|路径|变现|赖以成立|本质上|量级|按亿计|(?<!主要|药物|产品|有效|化学)成分(?!过敏)|一向如此|这一层/g },
   { id: 'verb', level: 'error', desc: '万能动词与视角腔', re: /解读|解构|叙事|从[^，。]{1,8}视角/g },
   { id: 'contrast', level: 'warn', desc: '对照句式', re: /不是[^。；！？]{1,24}而是|既是[^。；]{1,24}也是|这不是[^。；]{1,16}，是|是[^。；，]{1,12}，不是[^。；]{1,12}[。；]/g },
   { id: 'naming', level: 'error', desc: '迂回命名', re: /可以叫|不妨称之为|某种意义上|姑且称/g },
